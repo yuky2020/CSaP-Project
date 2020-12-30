@@ -98,6 +98,7 @@ CSaP_Project_EXTERNAL_OBJECTS =
 
 CSaP_Project: CMakeFiles/CSaP_Project.dir/audio/paex_record.c.o
 CSaP_Project: CMakeFiles/CSaP_Project.dir/build.make
+CSaP_Project: /audio/libportaudio.a
 CSaP_Project: CMakeFiles/CSaP_Project.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir="/home/matt/Documents/GitProject/CSaP Project/cmake-build-debug/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking C executable CSaP_Project"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/CSaP_Project.dir/link.txt --verbose=$(VERBOSE)
