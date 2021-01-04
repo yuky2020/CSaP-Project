@@ -17,17 +17,17 @@
  * @var maxFrameIndex Contains the number of frames that the audio file will store.
  * @var recordedSamples Contains the raw PCM audio data.
  */
-
+typedef float SAMPLE;
 typedef struct
 {
-    uint32_t duration;
-    uint16_t formatType;
-    uint16_t numberOfChannels;
-    uint32_t sampleRate;
-    uint32_t frameIndex;
-    uint32_t maxFrameIndex;
-    float* recordedSamples;
-} AudioData;
+    int          frameIndex;  /* Index into sample array. */
+    int          maxFrameIndex;
+    SAMPLE      *recordedSamples;
+}
+        paTestData;
 
-int recordFLAC(AudioData data, const char *fileName);
-AudioData initAudioData(uint32_t sample_rate, uint16_t channels, uint32_t duration);
+//int recordFLAC(AudioData data, const char *fileName);
+//AudioData initAudioData(uint32_t sample_rate, uint16_t channels, uint32_t duration);
+
+paTestData record();
+int playback(paTestData data);

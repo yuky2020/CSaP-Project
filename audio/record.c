@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "portaudio.h"
+#include <portaudio.h>
 #include <sndfile.h>
 #include "audio.h"
 
@@ -92,10 +92,10 @@ int recordFLAC(AudioData data, const char *fileName)
     PaStream* stream;
     int err = 0;
     int numSamples = data.maxFrameIndex * data.numberOfChannels;
-    int numBytes = numSamples * sizeof(data.recordedSamples[0]);
+    int numBytes = numSamples * sizeof(float );
 
-    data.recordedSamples = calloc(numSamples, numBytes); // From now on, recordedSamples is initialised.
-    if(!data.recordedSamples)
+    data.recordedSamples = malloc(numSamples*numBytes); // From now on, recordedSamples is initialised.
+    if(data.recordedSamples==NULL)
     {
         fprintf(stderr, "Could not allocate record array.\n");
         goto done;
