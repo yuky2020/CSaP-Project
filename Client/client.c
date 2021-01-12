@@ -8,7 +8,7 @@
 #include <string.h>
 #include"util.h"
 #define MAXLIMIT 20
-
+//send login data to socket return 1 for auth compleate 0 on failed
 int login(userData u, int t,int  s ){
 
   u.type=t; 
@@ -26,6 +26,21 @@ int login(userData u, int t,int  s ){
     return t;  
 
   }
+//return number of massage stored actualy
+int checkinbox(int s){
+  int ret,type=4 //4 is the type for this call
+    //write type in the socket
+    if (write(s,&type,sizeof(type))<0) {
+	perror("write");
+	exit(1);
+    }
+    //then the socket should return the number of massage
+    if (read(s,&ret,sizeof(t))<0) {
+	perror("read");
+	exit(1); }
+  return ret;
+}
+
 int main(int argc, char *argv[])
 {
  if (argc >3) {
@@ -114,7 +129,7 @@ do{ if(t==0){printf("1)Login\n");
         }while(t==0);
 
 printf("Welcome Back %s \n",afantastic.username );
-printf("%d new messages for you \n",checkinbox(afantastic,s));
+printf("%d inbox messages for you \n",checkinbox(afantastic,s));
 
 
 int i;

@@ -62,8 +62,10 @@ void dowork(int c)
 {
     //@var User to login or register 
     userData afantasticuser;
-    int result;
-    //read from Stream Socket 
+    int type,result,tentatives=0;
+    //client can try to acess five times then for security reason connection is abortefor security reason connection is abortedd
+    //read from Stream Socket
+    do{
     if (read (c, &afantasticuser, sizeof (userData)) < 0) {
 	perror ("read");
 	exit (1);
@@ -74,12 +76,32 @@ void dowork(int c)
 	else perror("Malformetted data from client(security allert: attack with a row socket is plausible )");
          exit(1); }
 
-
-   //write result to the stream
+    //write result to the stream
     if (write (c,&result, sizeof (int)) < 0) {
 	perror ("read");
 	exit (1);
+
+	 }
+    tentatives++;
+    if (tentatives>=5){
+       //close stream if client cant log in in five times kill also the child 
+       shutdown(c,2);
+       close(c);
+       exit(1);
     }
+    }while(result!=1);
+    
+    //from now we are logged so the server can start recive varius type of packages 
+    do{
+        if (read (c, &type, sizeof (int)) < 0) {
+	perror ("read");
+	exit (1);
+	 }
+
+
+
+    }
+
 
     shutdown (c, 2);
     close (c);	    
