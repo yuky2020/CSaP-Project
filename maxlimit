@@ -1,0 +1,116 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <string.h>
+#include"audio.h"
+#define MAXLIMIT 20
+
+int login(char user[MAXLIMIT],char pwd[MAXLIMIT],int t ){
+
+    return 0;  
+
+  }
+int main(int argc, char *argv[])
+{
+ if (argc >3) {
+	      printf("\nUsage:\n\t%s <User> <Password>\nOr no argument and wait for prompt\n",argv[0]);
+	      exit(1);
+              }
+   
+printf("____________________________________________");
+printf("Welocome to AudioMessage ");
+printf("--------------------------------------------- \n");
+int s,t=0;
+char user[MAXLIMIT],password[MAXLIMIT],hostname[MAXLIMIT];
+struct sockaddr_in saddr;
+struct hostent *hst;
+int port; //used to read and store  the port
+FILE *config;
+    if ((fptr = fopen("config.txt", "r")) == NULL) {
+        perror("opening file");
+        // Program exits if file pointer returns NULL.
+        exit(1);
+    }
+
+    // reads hostname skipping hostname:
+    fseek(config, 7*sizeof(char), SEEK_CUR);
+    //then read until new line
+    fscanf(config, "%[^\n]", hostname);
+    //then again skip port:
+    fseek(config,5*sizeof(char),SEEK_CUR);
+    fscanf (config, "%d", &port);      
+    
+    fclose(fptr);
+    printf("%s %d \n",hostname,port);
+}
+// Create the stream socket 
+    if ((s=socket(PF_INET,SOCK_STREAM,IPPROTO_TCP))<0) {
+	perror("socket");
+	exit(1);
+    }
+    puts("socket done");
+
+    // Determine host address by its network name
+    if ((hst=gethostbyname("localhost"))==NULL) {
+	perror("gethostbyname");
+	exit(1);
+    }
+    printf("gethostbyname: %u %d\n",*(int*)hst->h_addr,hst->h_length);
+
+    // Fill structure
+    bcopy(hst->h_addr,&saddr.sin_addr,hst->h_length);
+    saddr.sin_family=AF_INET;
+    saddr.sin_port=htons(20000);
+
+    // Connect to other socket
+    if (connect(s,(struct sockaddr *)&saddr,sizeof(saddr))<0){
+	perror("connect");
+	exit(1);
+    }
+    puts("connect done");
+
+
+
+
+if (argc==3){t=1;
+             *user=argv[1];
+             *password=argv[2];
+            }
+
+do{ if(t==0){printf("1)Login\n");
+              printf("2)Register\n");
+              scanf("%d",&t);
+              getchar();
+              printf("Please insert user:");
+              fgets(user, MAXLIMIT, stdin); 
+              printf("\nPlease insert password:");
+              fgets(password, MAXLIMIT, stdin); }
+                 
+       if(!login(user,password,t)){ t=0; printf("\nAuthFalied please try again\n");}
+        }while(t==0);
+
+printf("Welcome Back %s \n",user );
+
+int i;
+printf("1) listen  new message \n");
+printf("2) send a new message \n");
+printf("3) add new contact \n ");
+scanf("%d",&i);
+switch (i) {
+    case 2 :
+      { paTestData audio = record();
+        playback(audio);
+       }
+        
+    default: printf("This option is not avaible \n"); 
+        
+}
+
+
+
+}
+

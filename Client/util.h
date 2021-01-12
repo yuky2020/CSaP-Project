@@ -1,11 +1,10 @@
 /**
- * @file audio.h
- * @brief Contains AudioData structure, and relevent audio functions.
- */
-
+ * @file util.h
+ * @brief Contains AudioData structure,relevent audio functions and PackageData Structure
+**/
 #include <stdint.h>
 #include <string.h>
-
+#define MAXLIMIT 20
 /**
  * Holds all of the necessary information for building an
  * audio file.
@@ -13,6 +12,7 @@
  * @var formatType Contains the audio formatting type.
  * @var numberOfChannels Contains the number of audio channels.
  * @var sampleRate Contains the sample rate in Hertz.
+
  * @var frameIndex Contains the current frame to be processed.
  * @var maxFrameIndex Contains the number of frames that the audio file will store.
  * @var recordedSamples Contains the raw PCM audio data.
@@ -24,10 +24,19 @@ typedef struct
     int          maxFrameIndex;
     SAMPLE      *recordedSamples;
 }
-        paTestData;
+        AudioData;
 
 //int recordFLAC(AudioData data, const char *fileName);
 //AudioData initAudioData(uint32_t sample_rate, uint16_t channels, uint32_t duration);
 
-paTestData record();
-int playback(paTestData data);
+typedef struct
+{
+    int         type; //type is the type of package to be sent 1 for registration 2 for login 
+    char        username[MAXLIMIT];
+    char        password[MAXLIMIT];
+    
+
+}userData; 
+
+AudioData record();
+int playback(AudioData data);
