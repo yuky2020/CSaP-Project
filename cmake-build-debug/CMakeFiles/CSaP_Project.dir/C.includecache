@@ -6,3 +6,13 @@
 
 #IncludeRegexTransform: 
 
+/home/matt/Documents/GitProject/CSaP Project/audio/paex_record.c
+stdio.h
+-
+stdlib.h
+-
+portaudio.h
+/home/matt/Documents/GitProject/CSaP Project/audio/portaudio.h
+
+/home/matt/Documents/GitProject/CSaP Project/audio/portaudio.h
+

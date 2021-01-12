@@ -1,5 +1,6 @@
 # CSaP Project: A AudioMessagge sharing app that using Server-Client
 
+Tested on ArchLinux
 Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better compatibility
 
 ## Metadata Server (MDS)
