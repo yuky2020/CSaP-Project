@@ -38,5 +38,5 @@ typedef struct
 
 }userData; 
 
-AudioData record();
-int playback(AudioData data);
+AudioData record(); //record 5 second of audio use this value because  each AudioData structure in this way is not too big 
+int playback(AudioData data);// playback audio data structure

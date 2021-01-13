@@ -6,7 +6,16 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
+#include "util.h"
+//function to store a Message
+storeMessage(int s){
+MessageData tostore;
+if (read(s,&tostore.,sizeof(type))<0) {
+	perror("write");
+	exit(1);
 
+
+}
 void main(int argc, char *argv[])
 {
     int s;
@@ -71,7 +80,7 @@ do{
 	perror("write");
 	exit(1);
     }
-    //type on for echo
+    //type 1 for echo
     if(type==1){
     // Read (or recv) from socket
     printf("echo call from Mds \n");
@@ -80,15 +89,16 @@ do{
 	perror("read");
 	exit(1);
 	}}
+    //type six for message to store
+    if(type==6){ 
+	storeMessage(s);
 
-    if(type==2){
 
     }
     
 
-    printf("%d + %d = %d\n",ops[0],ops[1],ops[2]);
-
-}while(type!=5);
+    
+    }while(type!=5);
         // Close the client socket
     close(s);
 

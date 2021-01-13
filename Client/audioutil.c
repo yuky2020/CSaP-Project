@@ -53,7 +53,7 @@
 /* #define DITHER_FLAG     (paDitherOff) */
 #define DITHER_FLAG     (0) /**/
 /** Set to 1 if you want to capture the recording to a file. */
-#define WRITE_TO_FILE   (1)
+#define WRITE_TO_FILE   (0)
 
 /* Select sample format. */
 #if 1
@@ -205,7 +205,7 @@ paTestData record(){
     SAMPLE              max, val;
     double              average;
 
-    printf("patest_record.c\n"); fflush(stdout);
+    printf("record\n"); fflush(stdout);
 
     data.maxFrameIndex = totalFrames = NUM_SECONDS * SAMPLE_RATE; /* Record for a few seconds. */
     data.frameIndex = 0;
