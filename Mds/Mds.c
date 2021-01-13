@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include "util.h"
+#define VDRN 3 //Number of vdr used 
 //registration of a user 
 int registeru(userData afantasticuser){
    FILE *fp;
@@ -109,13 +110,13 @@ void dowork(int c)
     }
 
 
-    shutdown (c, 2);
+    shutdown (c,2);
     close (c);	    
 }
 
 void main()
 {
-    int s,c,len;
+    int s,c,len,vdrs[VDRN];
     struct sockaddr_in saddr;
     int ops[3];
     int addr;
