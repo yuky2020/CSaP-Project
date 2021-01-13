@@ -12,7 +12,7 @@ void main(int argc, char *argv[])
     int s;
     struct sockaddr_in saddr;
     struct hostent *hst;
-    int ops[3];
+    int type;// indicates the type of request from MDS 1 is a echo request 2 is for a audio message 
     FILE *config;
 
 //open config file 
@@ -57,29 +57,39 @@ fclose(config);
     saddr.sin_family=AF_INET;
     saddr.sin_port=htons(atoi(port));
 
-    // Connect to other socket
+    // Connect to other socket(mds)
     if (connect(s,(struct sockaddr *)&saddr,sizeof(saddr))<0){
 	perror("connect");
 	exit(1);
     }
     puts("connect done");
 
-
+do{
     
     // Write (or send) to socket
-    if (write(s,ops,sizeof(ops))<0) {
+    if (read(s,&type,sizeof(type))<0) {
 	perror("write");
 	exit(1);
     }
-
+    //type on for echo
+    if(type==1){
     // Read (or recv) from socket
-    if (read(s,ops,sizeof(ops))<0) {
+    printf("echo call from Mds \n");
+    //return the same value 1 for notifing that the Vdr is online ;
+    if (write(s,&type,sizeof(type))<0) {
 	perror("read");
 	exit(1);
+	}}
+
+    if(type==2){
+
     }
+    
 
     printf("%d + %d = %d\n",ops[0],ops[1],ops[2]);
 
-    // Close the client socket
+}while(type!=5);
+        // Close the client socket
     close(s);
+
 }
