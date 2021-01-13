@@ -97,7 +97,13 @@ void dowork(int c)
 	perror ("read");
 	exit (1);
 	 }
-
+	 switch (type) {
+	 	case /* variable case */:
+	 		
+	 		break;
+	 	default:
+	 		
+	 }
 
 
     }
