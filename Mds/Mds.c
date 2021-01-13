@@ -84,7 +84,7 @@ void dowork(int c)
 	 }
     tentatives++;
     if (tentatives>=5){
-       //close stream if client cant log in in five times kill also the child 
+       //close stream if client cant log in in five times kill also the child process 
        shutdown(c,2);
        close(c);
        exit(1);
@@ -97,7 +97,13 @@ void dowork(int c)
 	perror ("read");
 	exit (1);
 	 }
-
+	 switch (type) {
+	 	case /* variable case */:
+	 		
+	 		break;
+	 	default:
+	 		
+	 }
 
 
     }
