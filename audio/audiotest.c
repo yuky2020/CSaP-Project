@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
- AudioData *test=malloc(1*sizeof(AudioData));
+ AudioDataf *test=malloc(1*sizeof(AudioData));
  int i=0;
  while(i<=6){
                test[i]=record() ;// record for five second
