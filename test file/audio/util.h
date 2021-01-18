@@ -40,3 +40,4 @@ typedef struct
 
 AudioDataf record(); //record 5 second of audio use this value because  each AudioData structure in this way is not too big 
 int playback(AudioDataf data);// playback audio data structure
+AudioDataf recordP();// This implementation of the recorder can record until a key is pressed and auto remove silence from registration 

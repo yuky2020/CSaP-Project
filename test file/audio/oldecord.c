@@ -1,6 +1,6 @@
 /**
  * @file record.c
- * @brief Records a FLAC audio file
+ * @brief Records an AudioData recording from some times using poisix semaphore and child process to stop when user want 
  */
 
 #include <stdio.h>

@@ -1,6 +1,6 @@
 /**
  * @file util.h
- * @brief Contains AudioData structure,relevent audio functions and PackageData Structure
+ * @brief Contains AudioDataf structure,relevent audio functions and PackageData Structure
 **/
 #include <stdint.h>
 #include <string.h>
@@ -24,7 +24,7 @@ typedef struct
     int          maxFrameIndex;
     SAMPLE      *recordedSamples;
 }
-        AudioData;
+        AudioDataf;
 
 //int recordFLAC(AudioData data, const char *fileName);
 //AudioData initAudioData(uint32_t sample_rate, uint16_t channels, uint32_t duration);
@@ -38,5 +38,17 @@ typedef struct
 
 }userData; 
 
-AudioData record(); //record 5 second of audio use this value because  each AudioData structure in this way is not too big 
-int playback(AudioData data);// playback audio data structure
+AudioDataf record(); //record 5 second of audio use this value because  each AudioData structure in this way is not too big 
+int playback(AudioDataf data);// playback audio data structure
+AudioDataf recordP();// This implementation of the recorder can record until a key is pressed and auto remove silence from registration 
+
+typedef struct
+{
+    int         type; //type is the type of package to be sent for a package is 6
+    char        from[MAXLIMIT];
+    char        to[MAXLIMIT];
+    AudioDataf  message;
+    int         hash;
+    char        timestamp[MAXLIMIT];
+}PackageData; 
+

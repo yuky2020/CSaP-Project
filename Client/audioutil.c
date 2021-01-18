@@ -41,6 +41,8 @@
  * license above.
  */
 
+//modded by Matteo Bianchi to work as single function ,and optimized playback
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "portaudio.h"
@@ -479,8 +481,8 @@ int playback(paTestData data){
 
 done:
     Pa_Terminate();
- //   if( data.recordedSamples )       /* Sure it is NULL or valid. */
- //       free( data.recordedSamples );
+  //  if( data.recordedSamples )       /* Sure it is NULL or valid. */
+ //    free( data.recordedSamples );
     if( err != paNoError )
     {
         fprintf( stderr, "An error occured while using the portaudio stream\n" );

@@ -99,7 +99,8 @@ void dowork(int c)
 	exit (1);
 	 }
 	 switch (type) {
-	 	case /* variable case */:
+	 	case 7: //if the type is 7 client want the number of inbox message  ;
+		    
 	 		
 	 		break;
 	 	default:
@@ -107,7 +108,7 @@ void dowork(int c)
 	 }
 
 
-    }
+    }while(type!=5)//type 5 close the connection with the client 
 
 
     shutdown (c,2);
@@ -122,7 +123,7 @@ void main()
     int addr;
     int running;
     int maxspawn;
-
+    //create the stream socket
     if ((s=socket(AF_INET,SOCK_STREAM,0))<0) {
 	perror("socket");
 	exit(1);

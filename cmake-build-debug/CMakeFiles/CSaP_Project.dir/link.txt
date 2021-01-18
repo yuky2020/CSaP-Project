@@ -1,1 +1,0 @@
-/usr/bin/cc -g CMakeFiles/CSaP_Project.dir/audio/paex_record.c.o -o CSaP_Project  /audio/libportaudio.a 

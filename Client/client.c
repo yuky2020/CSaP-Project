@@ -28,7 +28,7 @@ int login(userData u, int t,int  s ){
   }
 //return number of massage stored actualy
 int checkinbox(int s){
-  int ret,type=4 //4 is the type for this call
+  int ret,type=7 //7 is the type for this call
     //write type in the socket
     if (write(s,&type,sizeof(type))<0) {
 	perror("write");
@@ -133,13 +133,17 @@ printf("%d inbox messages for you \n",checkinbox(afantastic,s));
 
 
 int i;
-printf("1) listen  new message \n");
+printf("1) show the new messages \n");
 printf("2) send a new message \n");
-printf("3) add new contact \n ");
+printf("3) add new contact in the address book \n ");
+ptintf("4)EXIT\n");
 scanf("%d",&i);
 switch (i) {
+  case 1:{
+	   listallmessage();
+	 }
     case 2 :
-      {  AudioData audio = record();
+      {  AudioDataf audio = recordP();
         playback(audio);
        }
         
