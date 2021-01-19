@@ -14,10 +14,10 @@
 #define INITIAL_VALUE 1//intial value of the semaphore 
 #define VDRN 1 //Number of vdr used
 //get the number of inbox message of a logged user;
-int giveInbox(userData afantasticuser;int vdrIndex, int vdrs[VDRN]){
+int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
    sem_t *sem;
-   int vdrtype=7 //7 is the type to write in the socket for this call
-   int inboxvdr=0 //the buffer for the returning value    
+   int vdrtype=7; //7 is the type to write in the socket for this call
+   int inboxvdr=0; //the buffer for the returning value    
    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
    sprintf(saddress, "%s.%d", SEM_NAME,vdrIndex);
    sem= sem_open(saddress, O_RDWR);//open the semaphore 
@@ -28,16 +28,16 @@ int giveInbox(userData afantasticuser;int vdrIndex, int vdrs[VDRN]){
    sem_wait(sem);//lock the semaphore so you can write to the VDR socket without risk 
    //write the type of request to the socket
    //write vdrtype to the socket    
-   if (write(vdrs[i],&vdrtype,sizeof(vdrtype))<0) {
+   if (write(vdrs[vdrIndex],&vdrtype,sizeof(vdrtype))<0) {
 	 perror("write");
 	 exit(1);}
    //write username to the socket
-   if (write(vdrs[i],&afantasticuser.username,sizeof(afantasticuser.username))<0) {
+   if (write(vdrs[vdrIndex],&usern,sizeof(usern[MAXLIMIT]))<0) {
 	 perror("write");
 	 exit(1);}
    wait(100);//give time to recive data and send the response from the i-th vdr process
    //read the result from actual vdr
-	    if (read(s,&inboxvdr,sizeof(inboxvdr))<0) {
+	    if (read(vdrs[vdrIndex],&inboxvdr,sizeof(inboxvdr))<0) {
 	    perror("read");
 	    exit(1);}
 
@@ -55,10 +55,10 @@ int giveInbox(userData afantasticuser;int vdrIndex, int vdrs[VDRN]){
 
 //get the vdr of a logged user
 //naturaly you shuold always wait to check if other process is using the semaphore for vdr socket
-int getvdrIndex(userData afantasticuser;int vdrs[VDRN] ){
+int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
    int    retvdr=0;//the return value from the vdr set to default to 0; 
    int    vdrtype=9; //the type to send to the vdr in order to get back if the user is or not in it;
-   for(i=0;i<VDRN;i++){
+   for(int i=0;i<VDRN;i++){
 	    sem_t *sem;
 	    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
 	    sprintf(saddress, "%s.%d", SEM_NAME,i);
@@ -73,12 +73,12 @@ int getvdrIndex(userData afantasticuser;int vdrs[VDRN] ){
 		  perror("write");
 		  exit(1);}
 	    //write username to the socket
-	    if (write(vdrs[i],&afantasticuser.username,sizeof(afantasticuser.username))<0) {
+	    if (write(vdrs[i],&usernameasizeof(username[MAXLIMIT]))<0) {
 		  perror("write");
 		  exit(1);}
 	    wait(100);//give time to recive data and send the response from the i-th vdr process
             //read the result from actual vdr
-	    if (read(s,&retvdr,sizeof(retvdr))<0) {
+	    if (read(vdrs[i],&retvdr,sizeof(retvdr))<0) {
 	    perror("read");
 	    exit(1);}
 
@@ -185,7 +185,7 @@ void dowork(int c,int vdrs[VDRN])
     
     //from now we are logged so the server can start recive varius type of packages
     //lets check if we have alredy a vdr for this client and if not select one randomicaly;
-    vdrIndex=getvdrIndex(afantasticuser,vdrs);
+    vdrIndex=getvdrIndex(afantasticuser.username,vdrs);
 
     do{
         if (read (c, &type, sizeof (int)) < 0) {
@@ -194,7 +194,7 @@ void dowork(int c,int vdrs[VDRN])
 	 }
 	 switch (type) {
 	 	case 7: //if the type is 7 client want the number of inbox message  ;
-		   {int inbox=giveInbox(afantasticuser,vdrIndex,vdrs);//this function return the number of inbox Audio message of a user;
+		   {int inbox=giveInbox(afantasticuser.username,vdrIndex,vdrs);//this function return the number of inbox Audio message of a user;
 		     if (write (c,&inbox, sizeof (int)) < 0) {
 			perror ("write");
 			exit (1);
@@ -205,11 +205,12 @@ void dowork(int c,int vdrs[VDRN])
 	 		
 	 		break;
 	 	default:
+			break;
 	 		
 	 }
 
 
-    }while(type!=5)//type 5 close the connection with the client 
+    }while(type!=5);//type 5 close the connection with the client 
 
 
     shutdown (c,2);
@@ -284,7 +285,7 @@ void main()
 	}
       wait(100);//time to get the result write in the socket by vdr
       //read from the socket the value 
-      if (read(vdr[runningvdr],&echo,sizeof(echo))<0) {
+      if (read(vdrs[runningvdr],&echo,sizeof(echo))<0) {
 	perror("write");
 	exit(1);}
 
@@ -354,18 +355,16 @@ void main()
     // close  client "Master socket"
     close(s);
     //close vdr "Master socket"
-    close(vdr)
+    close(vdr);
     //close each vdr socket   
-    for(i=0;i<=VDRN;i++){close(vdrs[i]);} 
+    for(int i=0;i<=VDRN;i++){close(vdrs[i]);} 
     //unlink and destroy vdr named semaphore
     for(int j=0;j<VDRN;j++){
     char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the j vdr 
-    sprintf(address, "%s.%d", SEM_NAME,j);
+    sprintf(saddress, "%s.%d", SEM_NAME,j);
 
     if (sem_unlink(saddress) < 0) //unlink the semaphore
     perror("sem_unlink failed");   
     sem_destroy(semvdr[j]);//destroy the semaphore after usage good pratice
-
-
-
+    }
 }
