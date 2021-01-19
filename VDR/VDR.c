@@ -7,6 +7,15 @@
 #include <netdb.h>
 #include <string.h>
 #include "util.h"
+//check if a user has ever logged here
+int checkuser(char user[MAXLIMIT]){
+   char address[(MAXLIMIT+11)] = {'\0'};
+
+   sprintf(address,"users/%sInbox",user);
+   //check if the file  exist and if it is return 1 else return 0;
+   if ((fp = fopen(address, "rb")))return 1;
+   return 0;
+}   
 //get number of message in inbox for a user ;
 int getinbox(char user[MAXLIMIT]){
    int ninbox=0;
@@ -353,8 +362,23 @@ do{
        //return 0 if there is an error and 1 if everything has gone fine       //return 0 if there is an error and 1 if everything has gone fine  
        if(!readandsendMessages(user,s)){perror("cant send message"); exit(1);}
 
-
 	}
+    //type 9 is for check if the user was ever register in this vdr;
+    if(type==9){
+	char user[MAXLIMIT];
+	//read the username to search inbox;
+        if (read(s,&user,sizeof(user))<0) {
+	perror("read");
+	exit(1);}
+        //socret= return 0 if the file with ninbox dosen't esist 1 else ;
+	socret=checkuser(user);
+        //return socret to the socket
+        if (write(s,&socret,sizeof(socret))<0) {
+	perror("write");
+	exit(1);}
+
+
+    } 
     
 
     

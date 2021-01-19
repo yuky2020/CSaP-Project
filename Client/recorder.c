@@ -116,7 +116,7 @@ AudioDataf recordP(void)
         perror("sem_open(3) error");
         exit(EXIT_FAILURE);
     }
-
+    //port audio inizialization 
     PaError err = paNoError;
     if((err = Pa_Initialize())) goto done;
     const PaDeviceInfo *info = Pa_GetDeviceInfo(Pa_GetDefaultInputDevice());
