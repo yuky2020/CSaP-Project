@@ -13,6 +13,109 @@
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)// "Permessi del semaforo"
 #define INITIAL_VALUE 1//intial value of the semaphore 
 #define VDRN 1 //Number of vdr used
+//send a message to get stored in the vdr @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
+int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
+   PackageData 	tosend;//the package to send to recive from client and send to the vdr
+   sem_t 	*sem;//semaphore for lock the vdr while used
+   int 		vdrToIndex;//the index of the vdr of the to username;
+   int          vdrReturn;//the final return value from vdr;
+   tosend.type=6;
+    //read the user from the data is sended 
+    if (read(c,&tosend.from,sizeof(tosend.from))<0) {
+
+	perror("read");
+	return 1;}
+    //read the user to the message is sended
+    if (read(c,&tosend.to,sizeof(tosend.to))<0) {
+	perror("read");
+	return 1;}
+    //read the size of audio data
+    if (read(c,&tosend.size,sizeof(tosend.size))<0) {
+	perror("read");
+	return 1;}
+    //read the audioData 
+    if (read(c,&tosend.message,tosend.size)<0) {
+	perror("read");
+	return 1;}
+
+    //read the hash
+    if (read(c,&tosend.hash,sizeof(tosend.hash))<0) {
+	perror("read");
+	return 1;}
+    //read timestamp
+    if (read(c,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
+	perror("read");
+	return 1;}
+    //check if the hash is still valid 
+    if(tosend.hash!=hashCode(tosend)){
+	perror("hash is different");
+	return 1;}
+    //ceck if the username is =to the from ;
+    if (strcmp(username,tosend.from){
+	  perror("sombody is try to send a message as anoter user");
+	  return 1;
+	  }
+   //check which is the vdr for the to user ;
+   vdrToIndex=getvdrIndex(tosend.to,vdrs);
+   //now open and lock the semaphore 
+   char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
+   sprintf(saddress, "%s.%d", SEM_NAME,vdrToIndex);
+   sem= sem_open(saddress, O_RDWR);//open the semaphore 
+   if (sem == SEM_FAILED) {
+      perror("sem_open failed");
+      exit(EXIT_FAILURE);
+      }
+   sem_wait(sem);//lock the semaphore so you can write to the VDR socket without risk 
+   //now send the data trought socket to the vdr and serialize it
+   //when we send the type we also trigger the vdr to save the data;
+   if (write(vdrs[vdrToIndex],&tosend.type,sizeof(tosend.type))<0) {
+	perror("write");
+	return 1;}
+        
+   if (write(vdrs[vdrToIndex],&tosend.from,sizeof(tosend.from))<0) {
+	perror("write");
+	return 1;}
+        
+   if (write(vdrs[vdrToIndex],&tosend.to,sizeof(tosend.to))<0) {
+	perror("write");
+	return 1;}
+        
+
+   if (write(vdrs[vdrToIndex],&tosend.size,sizeof(tosend.size))<0) {
+	perror("write");
+	return 1;}
+        
+
+   if (write(vdrs[vdrToIndex],&tosend.message,tosend.size)<0) {
+	perror("write");
+	return 1;}
+       
+       
+   if (write(vdrs[vdrToIndex],&tosend.hash,sizeof(tosend.hash))<0) {
+	perror("write");
+	return 1;}
+       
+ 
+   if (write(vdrs[vdrToIndex],&tosend.timestamp,sizeof(tosend.timestamp))<0) {
+	perror("write");
+	return 1;}
+
+   sem_post(sem);//unlock the semaphore "incresing the  counter"
+   if (sem_close(sem) < 0){
+      perror("sem_close failed");
+      exit(0);}
+  
+   wait(100)// wait for get a response from vdr ;
+   //read response from vdr
+   if (read(vdrs[vdrToIndex],&vdrReturn,sizeof(vdrReturn))<0) {
+	perror("read");
+	return 1;}
+   //then return 0 if everything goes fine
+    if(vdrReturn==1)return 0;
+    return 1;
+
+}
+
 //get the number of inbox message of a logged user;
 int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
    sem_t *sem;
@@ -201,9 +304,21 @@ void dowork(int c,int vdrs[VDRN])
 
 			}
 
-		   } 
+		   }
+		case 6:// if the type is 6 client want to send a message to another user;
+		   {int isSended=sendMessage(afantasticuser.username,vdrs,c);//this function return the number of inbox Audio message of a user;
+		     if (write (c,&isSended, sizeof (int)) < 0) {
+			perror ("write");
+			exit (1);
+			}
+		   }	
 	 		
-	 		break;
+	       case 8://if the type of the call is 8 the client is asking for is messages;
+		   {
+		      readMessages()//TO IMPLEMENT 
+		   }
+	       	
+	       	break;
 	 	default:
 			break;
 	 		
