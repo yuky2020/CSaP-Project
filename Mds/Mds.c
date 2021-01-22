@@ -115,6 +115,124 @@ int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
     return 1;
 
 }
+//function to send all message destinated to a user; to that user;
+int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c){
+   int vdrToType=8;//vdr type for this operation
+   int vdrRet,clientRet//return value from vdr;and client 
+   int inboxN=giveInbox(username,vdrIndex,vdrs);//number of message to read;
+   PackageData messageList[inboxN];//create the structure to conserve the data, Dinamic array here is plausible but not sense we know how many message to read;
+   sem_t *sem //poisix semaphore for comunicate with vdr without problem ;
+   char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
+   sprintf(saddress, "%s.%d", SEM_NAME,vdrIndex);
+   sem= sem_open(saddress, O_RDWR);//open the semaphore 
+   if (sem == SEM_FAILED) {
+      perror("sem_open failed");
+      exit(EXIT_FAILURE);
+      }
+   sem_wait(sem);//lock the semaphore so you can write to the VDR socket without risk
+   //send the type to the vdr
+   if (write(vdrs[vdrToIndex],&vdrToType,sizeof(int))<0) {
+	perror("write");
+	return 1;}
+   // send the username to the vdr ;
+   if (write(vdrs[vdrToIndex],&username,sizeof(username))<0) {
+	perror("write");
+	return 1;}
+   for(int i=0,i<inboxN,i++){
+      //read the data for every message package
+      if(read(vdrs[vdrIndex],&messageList[i].type,sizeof(messageList[i].type))<0) {
+	 perror("read");
+	 return 1;}
+
+      if (read(vdrs[vdrIndex],&messageList[i].from,sizeof(messageList[i].from))<0) {
+	perror("read");
+	return 1;}
+      //read the user to the message is sended
+      if (read(vdrs[vdrIndex],&messageList[i].to,sizeof(messageList[i].to))<0) {
+	perror("read");
+	return 1;}
+      //read the size of audio data
+      if (read(vdrs[vdrIndex],&messageList[i].size,sizeof(messageList[i].size))<0) {
+	perror("read");
+	return 1;}
+      //read the audioData 
+      if (read(vdrs[vdrIndex],&messageList[i].message,messageList[i].size)<0) {
+	perror("read");
+	return 1;}
+
+      //read the hash
+      if (read(vdrs[vdrIndex],&messageList.hash,sizeof(messageList[i].hash))<0) {
+	perror("read");
+	return 1;}
+      //read timestamp
+      if (read(vdrs[vdrIndex],&messageList[i].timestamp,sizeof(messageList[i].timestamp))<0) {
+	perror("read");
+	return 1;}
+      //check if the hash is still valid 
+      if(messageList[i].hash!=hashCode(messageList[i])){
+	perror("hash is different");
+	return 1;}
+      //now sending the data to the client 
+      if (write(c,&messageList[i].type,sizeof(messageList[i].type))<0) {
+	perror("write");
+	return 1;}
+        
+      if (write(c,&messageList[i].from,sizeof(messageList[i].from))<0) {
+	perror("write");
+	return 1;}
+        
+      if (write(c,&messageList[i].to,sizeof(messageList[i].to))<0) {
+	perror("write");
+	return 1;}
+        
+
+      if (write(c,&messageList[i].size,sizeof(tmp.size))<0) {
+	perror("write");
+	return 1;}
+        
+
+      if (write(c,&messageList[i].message,messageList[i].size)<0) {
+	perror("write");
+	return 1;}
+       
+       
+      if (write(c,&messageList[i].hash,sizeof(messageList[i].hash))<0) {
+	perror("write");
+	return 1;}
+       
+ 
+      if (write(c,&messageList[i].timestamp,sizeof(messageList[i].timestamp))<0) {
+	perror("write");
+	return 1;}
+       
+   }
+   free(messageList);//don't need it anymore
+   if(read(vdrs[vdrIndex],&vdrRet,sizeof(vdrRet))<0) {
+	 perror("Last read operation failed");
+	 return 1;}
+
+   if(vdrRet!=5){
+      perror("Value error on last read");
+      return 1;
+   }
+   sem_post(sem);//unlock the vdr semaphore "incresing the  counter"
+   //close the semaphore good pratice
+   if (sem_close(sem) < 0){
+      perror("sem_close failed");
+      exit(0);}
+
+   //at this point we can send the return value also to the client for let know that sending is over 
+   if (write(c,&retvdr,sizeof(retvdr))<0) {
+	perror("write");
+	return 1;}
+   //and wait for a double check from client 
+   if(read(c,&clientRet,sizeof(clientRet))<0){perror("write"); return 1;}
+   if(clientRet!=5){perror("clientRet value not valid")return 1;}
+
+   return 0;
+
+
+}
 
 //get the number of inbox message of a logged user;
 int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
@@ -314,11 +432,17 @@ void dowork(int c,int vdrs[VDRN])
 		   }	
 	 		
 	       case 8://if the type of the call is 8 the client is asking for is messages;
-		   {
-		      readMessages()//TO IMPLEMENT 
+		   {int isDone=0;
+		    //function return 1 if there is a problem
+		    if(getClientMessage(afantasticuser.username,vdrIndex,vdrs,c)){perror("client recive wrong message");
+                       isDone=1;}
+		    if (write (c,&isDone, sizeof (int)) < 0) {
+			perror ("write");
+			exit (1);
+			}
 		   }
 	       	
-	       	break;
+	       	
 	 	default:
 			break;
 	 		
