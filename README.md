@@ -8,21 +8,29 @@ Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better compat
 
 Auto-crop silence in the message by analyzing peek frequency.
 
+Possibility of search for messages from a specific user, a date range and even the two things tougheter!
+
+Possibility to send long audio without death times ;
+
+No TIme limit for audio rec has still reconized ;
+
 Huge use of semaphore and parent-child processes(use POSIX semaphore insted of system five one)..
 
+The project is highly scalable(you can add how much VDR you want )
 
 
-## Metadata Server (MDS)
 
-### ● Handles initial connections with clients, maintains a “database” (even implemented as a file) containinginformation regarding users, messages, mailbox status, free space, etc
+### Metadata Server (MDS)
 
-### Upon startup, or after a crash, the MDS contacts all known VDR processes, which could be running on thesame or on another server, to get/check information about the status.
+#### ● Handles initial connections with clients, maintains a “database” (even implemented as a file) containinginformation regarding users, messages, mailbox status, free space, etc
 
-### – Both the MDS and VDR should keep copy of their own metadata.
+#### Upon startup, or after a crash, the MDS contacts all known VDR processes, which could be running on thesame or on another server, to get/check information about the status.
 
-### The information wrt IP addresses and port# of the various components is contained in a configuration file,read upon startup by all processes
+#### – Both the MDS and VDR should keep copy of their own metadata.
 
-### After initialization, the MDS waits for requests from clients which, upon authentication (usingname/password), could:
+#### The information wrt IP addresses and port# of the various components is contained in a configuration file,read upon startup by all processes
+
+#### After initialization, the MDS waits for requests from clients which, upon authentication (usingname/password), could:
 
 ### 
 
