@@ -9,6 +9,111 @@
 #include <time.h>
 #include"util.h"
 int serchMessages(char user[MAXLIMIT,int s]){
+  int mdsRet;//return value from mds;
+  int type=8;//the type of call for get all messages destinated to a user;
+  int inboxn=checkinbox(s)//recall now because inbox number could change in small time 
+  //PackageData *c=malloc(1*sizeof(PackageData));
+  PackageData messageList[inboxn];
+    //wirte in the socket data for login or register
+do{  if (write(s,&type,sizeof(type))<0) {
+	perror("write");
+	return 1;
+     }
+    printf("##############");
+    printf("Serch for  messages\n");
+    printf("##############");
+    printf("");//to implement
+
+    for(int i=0;i<inboxn;i++){
+      if(read(s,&messageList[i].type,sizeof(messageList[i].type))<0){
+	 perror("read");
+	return 1;}
+
+      if (read(s,&messageList[i].from,sizeof(messageList[i].from))<0) {
+	  perror("read");
+	  return 1;}
+      //read the user to the message is sended
+      if (read(s,&messageList[i].to,sizeof(messageList[i].to))<0) {
+	  perror("read");
+	  return 1;}
+      //read the size of audio data
+      if (read(s,&messageList[i].size,sizeof(messageList[i].size))<0) {
+	  perror("read");
+	  return 1;}
+      //read the audioData 
+      if (read(s,&messageList[i].message,messageList[i].size)<0) {
+	  perror("read");
+	  return 1;}
+
+      //read the hash
+      if (read(s,&messageList[i].hash,sizeof(messageList[i].hash))<0) {
+	  perror("read");
+	  return 1;}
+      //read timestamp
+      if (read(s,&messageList[i].timestamp,sizeof(messageList[i].timestamp))<0) {
+	  perror("read");
+	  return 1;}
+      //check if the hash is still valid 
+      if(messageList[i].hash!=hashCode(messageList[i])){
+	  perror("hash is different");
+	  return 1;}
+      
+     }
+    //after reding data read the return value 
+    if (read(s,&mdsRet,sizeof(mdsRet))<0) {
+	 perror("read");
+	  return 1;}
+    //check if is correct
+    if(mdsRet!=5){
+	perror("Sending hasent work");
+	free(messageList);
+	return 1;
+      }
+    //send doble check to Mds
+    if (write(s,&mdsRet,sizeof(mdsRet))<0) {
+	  perror("read");
+	  free(messageList);
+	  return 1;}
+    int i;    
+    for(i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
+      printf("%d)Message from %s sended %s\n",(inbox-i),messageList[i].from,messageList[i].timestamp);
+  
+      }
+
+    scanf("%d",&i);
+    if(i>=ninbox){printf("error message not found 404"); wait(1000); i=3;}//set a new value for i so you can back to all message;
+    else{
+      while(i<3){//if 3 the function reload all the message and you can list it again;
+      //playback the message
+      playback(messageList[i].message);      
+      printf("From %s \nTime:%s\n",messageList[i].from,messageList[i].timestamp);
+      printf("1) for listen again \n");
+      printf("2)to inoltrate the message\n");
+      printf("3)come back to inbox \n");
+      printf("4)go back to main page\n");
+      scanf("%d",&i);
+     if(i==2){messageList[i].to=selectuserto(s); //inoltrate to a new user the message;
+	      messageList[i].from=username;
+             if(sendMessage(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
+	      else{printf("MESSAGE SENT SUCESSFULLY\n");}
+		  
+
+	      }
+          
+
+      
+  }
+    }while(i!=4);
+free(messageList);//good thing to do
+return 0;//return 0 in case of success;
+  
+   
+
+  
+
+
+
+
 
 
 }
