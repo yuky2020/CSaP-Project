@@ -4,17 +4,12 @@
 **/
 #include <stdint.h>
 #include <string.h>
-#define MAXLIMIT 20
-#define FRAMESIZE 1024
+#define ADDRESSBOOKLIMIT 200
+#define MAXLIMIT    20 //limit for username and Password
+#define FRAMESIZE   1024//size of a audio Frame 
+#define TIMESTAMPS  26//the size of the string with time stamp;
 /**
- * Holds all of the necessary information for building an
- * audio file.
- * @var duration Contains how long the audio file will be in seconds.
- * @var formatType Contains the audio formatting type.
- * @var numberOfChannels Contains the number of audio channels.
- * @var sampleRate Contains the sample rate in Hertz.
-
- * @var frameIndex Contains the current frame to be processed.
+  * @var frameIndex Contains the current frame to be processed.
  * @var maxFrameIndex Contains the number of frames that the audio file will store.
  * @var recordedSamples Contains the raw PCM audio data.
  */
@@ -28,8 +23,8 @@ typedef struct
         AudioDataf;
 
 //int recordFLAC(AudioData data, const char *fileName);
-//AudioData initAudioData(uint32_t sample_rate, uint16_t channels, uint32_t duration);
 
+//Contains data about a user;
 typedef struct
 {
     int         type; //type is the type of package to be sent 1 for registration 2 for login 
@@ -51,6 +46,6 @@ typedef struct
     int         size; //size of the message ;
     AudioDataf  message;
     int         hash;
-    char        timestamp[MAXLIMIT];
+    char        timestamp[TIMESTAMPS];
 }PackageData; 
 int hashCode(PackageData);//is the hashCode for a package; 
