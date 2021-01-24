@@ -8,82 +8,274 @@
 #include <string.h>
 #include <time.h>
 #include"util.h"
-#define MAXLIMIT 20
+int serchMessages(char user[MAXLIMIT,int s]){
+
+
+}
+//add one user to the adressBook after check it it is or not enroled in the server 
+int addusertoadressbook(int s){
+  FILE *fp;//file where to place adressBook;
+  char usernameList[ADDRESSBOOKLIMIT][MAXLIMIT];
+  char toadd[MAXLIMIT];//username to add to the adressBook;
+  int j,trov,i=0;//for save the number of user and for going trought it 
+  if ((fp = fopen("AdressBook", "rb")) == NULL) {
+      perror(" opening file");
+      // Program exits if file pointer returns NULL.
+      return 1;
+    }
+  int j=0;
+
+  while (!feof(fp)){// while not end of file
+           fread(usernameList[j],sizeof(char[MAXLIMIT]),1,fp);
+	   j++;
+            
+      }
+  j--;//becouse you encrement before re enter
+  fclose(fp);//close the file for now
+
+  printf("insert username to add\n");
+  scanf("%s",toadd);
+  //check if the user is alredy in the adressBook;
+  for (i=0;i<=j;i++){
+  if (strcmp(usernameList[i],toadd)==0){
+  printf("This user is alredy in the list");
+  return 1;}
+  
+  }
+  //check if the user exist() from server
+  int type=9;//the type of call for this function
+  if (write(s,&type,sizeof(type))<0) {
+	perror("write");
+	return 1;}
+   	
+  if (read(s,&j,sizeof(int))<0) {
+	perror("write");
+	return 1;}
+  if(j<1){perror("problem with MDS"); return 1;}
+  int usernameList[j][MAXLIMIT];
+  trov=0;//set trov =1 when we find a matching 
+
+  //read all username and print it 
+  for(int k=0;k<j;j++){
+    //read from socket and print for the user
+    if (read(s,&usernameList[k],sizeof(char[MAXLIMIT]))<0) {
+	perror("write");
+	return 1;}
+    if(strcmp(usernameList[k],toadd)=0)trov=1;
+  }
+  if (read(s,&type,sizeof(int)<0) {
+	perror("write");
+        return 1;}
+  //type is used to store the end of trasmission from MDS;	
+  if(type!=1) {
+	perror("write");
+        return 1;}
+  type=5;//end of trasmission for MDS
+  if (write(s,&type,sizeof(type))<0) {
+	perror("write");
+	return 1;}
+  //if i found it i can add it to the adressBook
+  if(trov){
+	    if ((fp = fopen("AdressBook", "ab")) == NULL) {//open finaly in append mode to add the new user
+		perror(" opening file");
+		// Program exits if file pointer returns NULL.
+		return 1;
+		      }
+	    fwrite(toadd,sizeof(char[MAXLIMIT]),1,fp);
+	    fclose(fp);
+	    return 1;
+
+	}
+  return 0;
+
+
+
+ 
+}    
+const char * selectuserto(int s){
+  int j,i=0;//j is the nuber of user actualy in server
+  printf("1)search from adressBook\n");
+  printf("2)search from all user\n");
+  scanf("%d",&i);
+  printf("select wanted user by number");
+  if(i==1){
+      FILE *fp;//file where to place adressBook;
+      char usernameList[ADDRESSBOOKLIMIT][MAXLIMIT];//list from adressBook
+
+
+      if ((fp = fopen("AdressBook", "rb")) == NULL) {
+	    perror(" opening file");
+	    // Program exits if file pointer returns NULL.
+	    return 1;
+	    }
+      j=0;
+
+      while (!feof(fp)){// while not end of file
+	    fread(usernameList[j],sizeof(char[MAXLIMIT]),1,fp);
+	    printf("%d,%s\n",(j+1),usernameList[j]);
+	    j++;
+		}
+      j--;//becouse you encrement before re enter
+      fclose(fp);//close the file for now
+      int k;
+      do{scanf(%d,&k);
+	 if(k>j)printf("this number is still not presnt");
+	}while(k>j);
+      char tmp[MAXLIMIT];
+      strcpy(tmp,userList[i]);
+      free(usernameList[i]);//fre the user list not useful anymore;
+      return tmp;
+
+      }
+
+  if(i==2){//retrive all user and selsct from the list 
+    int type=9;//the type of call for this function
+    if (write(s,&type,sizeof(type))<0) {
+	perror("write");
+	return 1;}
+   	
+    if (read(s,&j,sizeof(int))<0) {
+	perror("write");
+	return 1;}
+    if(j<1){perror("problem with MDS"); return 1;}
+    int usernameList[j][MAXLIMIT];
+
+    //read all username and print it 
+    for(int k=0;k<j;j++){
+      //read from socket and print for the user
+      if (read(s,&usernameList[k],sizeof(char[MAXLIMIT]))<0) {
+	  perror("write");
+	  return 1;}
+      printf("%d,%s\n",(k+1),usernameList[k]);
+      
+      }
+    if (read(s,&type,sizeof(int)<0) {
+	  perror("write");
+	  return 1;}
+    //type is used to store the end of trasmission from MDS;	
+    if(type!=1) {
+	  perror("write");
+	  return 1;}
+    type=5;//end of trasmission for MDS
+    if (write(s,&type,sizeof(type))<0) {
+	  perror("write");
+	  return 1;}
+	
+
+    //actual_user enter the user wanted;
+    do{ scanf("%d",&i);
+      if (i>j)printf("This user is still not in list try again \n");
+      }while(i>j);
+
+    char tmp[MAXLIMIT];
+    strcpy(tmp,usernameList[i]);
+    free(usernameList[i]);//fre the user list not useful anymore;
+    return tmp;
+    }
+
+
+
+}
 
 //list all mesage sended to this user contact the MDS to get data, is an interactive function 
-int listallmessage(int s){
+int listallmessage(int s,char username[MAXLIMIT]){
   int mdsRet;//return value from mds;
   int type=8;//the type of call for get all messages destinated to a user;
   int inboxn=checkinbox(s)//recall now because inbox number could change in small time 
   //PackageData *c=malloc(1*sizeof(PackageData));
   PackageData messageList[inboxn];
     //wirte in the socket data for login or register
-  if (write(s,&type,sizeof(type))<0) {
+do{  if (write(s,&type,sizeof(type))<0) {
 	perror("write");
 	return 1;
-    }
-  printf("##############");
-  printf("INBOX\n");
-  printf("##############");
-  printf("SElECT MESSAGE");
+     }
+    printf("##############");
+    printf("INBOX\n");
+    printf("##############");
+    printf("SElECT MESSAGE");
 
-  for(int i=0;i<inboxn;i++){
-    if(read(s,&messageList[i].type,sizeof(messageList[i].type))<0){
-       perror("read");
-       return 1;}
-
-    if (read(s,&messageList[i].from,sizeof(messageList[i].from))<0) {
-	perror("read");
-	return 1;}
-    //read the user to the message is sended
-    if (read(s,&messageList[i].to,sizeof(messageList[i].to))<0) {
-	perror("read");
-	return 1;}
-    //read the size of audio data
-    if (read(s,&messageList[i].size,sizeof(messageList[i].size))<0) {
-	perror("read");
-	return 1;}
-    //read the audioData 
-    if (read(s,&messageList[i].message,messageList[i].size)<0) {
-	perror("read");
+    for(int i=0;i<inboxn;i++){
+      if(read(s,&messageList[i].type,sizeof(messageList[i].type))<0){
+	 perror("read");
 	return 1;}
 
-    //read the hash
-    if (read(s,&messageList[i].hash,sizeof(messageList[i].hash))<0) {
-	perror("read");
-	return 1;}
-    //read timestamp
-    if (read(s,&messageList[i].timestamp,sizeof(messageList[i].timestamp))<0) {
-	perror("read");
-	return 1;}
-    //check if the hash is still valid 
-    if(messageList[i].hash!=hashCode(messageList[i])){
-	perror("hash is different");
-	return 1;}
+      if (read(s,&messageList[i].from,sizeof(messageList[i].from))<0) {
+	  perror("read");
+	  return 1;}
+      //read the user to the message is sended
+      if (read(s,&messageList[i].to,sizeof(messageList[i].to))<0) {
+	  perror("read");
+	  return 1;}
+      //read the size of audio data
+      if (read(s,&messageList[i].size,sizeof(messageList[i].size))<0) {
+	  perror("read");
+	  return 1;}
+      //read the audioData 
+      if (read(s,&messageList[i].message,messageList[i].size)<0) {
+	  perror("read");
+	  return 1;}
+
+      //read the hash
+      if (read(s,&messageList[i].hash,sizeof(messageList[i].hash))<0) {
+	  perror("read");
+	  return 1;}
+      //read timestamp
+      if (read(s,&messageList[i].timestamp,sizeof(messageList[i].timestamp))<0) {
+	  perror("read");
+	  return 1;}
+      //check if the hash is still valid 
+      if(messageList[i].hash!=hashCode(messageList[i])){
+	  perror("hash is different");
+	  return 1;}
       
      }
-  //after reding data read the return value 
-  if (read(s,&mdsRet,sizeof(mdsRet))<0) {
-	perror("read");
-	return 1;}
-  //check if is correct
-  if(mdsRet!=5){
-      perror("Sending hasent work");
-      free(messageList);
-      return 1;
-    }
-  //send doble check to Mds
-  if (write(s,&mdsRet,sizeof(mdsRet))<0) {
-	perror("read");
+    //after reding data read the return value 
+    if (read(s,&mdsRet,sizeof(mdsRet))<0) {
+	 perror("read");
+	  return 1;}
+    //check if is correct
+    if(mdsRet!=5){
+	perror("Sending hasent work");
 	free(messageList);
-	return 1;}
-    
-  for(int i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
-    printf("%d)Message from %s sended %s\n",(inbox-i),messageList[i].from,messageList[i].timestamp);
+	return 1;
+      }
+    //send doble check to Mds
+    if (write(s,&mdsRet,sizeof(mdsRet))<0) {
+	  perror("read");
+	  free(messageList);
+	  return 1;}
+    int i;    
+    for(i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
+      printf("%d)Message from %s sended %s\n",(inbox-i),messageList[i].from,messageList[i].timestamp);
   
-    }
+      }
 
+    scanf("%d",&i);
+    if(i>=ninbox){printf("error message not found 404"); wait(1000); i=3;}//set a new value for i so you can back to all message;
+    else{
+      while(i<3){//if 3 the function reload all the message and you can list it again;
+      //playback the message
+      playback(messageList[i].message);      
+      printf("From %s \nTime:%s\n",messageList[i].from,messageList[i].timestamp);
+      printf("1) for listen again \n");
+      printf("2)to inoltrate the message\n");
+      printf("3)come back to inbox \n");
+      printf("4)go back to main page\n");
+      scanf("%d",&i);
+     if(i==2){messageList[i].to=selectuserto(s); //inoltrate to a new user the message;
+	      messageList[i].from=username;
+             if(sendMessage(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
+	      else{printf("MESSAGE SENT SUCESSFULLY\n");}
+		  
 
+	      }
+          
+
+      
+  }
+    }while(i!=4);
+free(messageList);//good thing to do
+return 0;//return 0 in case of success;
   
    
 
@@ -220,13 +412,14 @@ do{
   printf("1) show the new messages \n");
   printf("2) send a new message \n");
   printf("3) add new contact in the address book \n ");
+  printf("4) search messages\n");
   ptintf("9)EXIT\n");
   scanf("%d",&i);
   switch (i) {
     case 1:{
-	   listallmessage(s);
+	   listallmessage(s,afantasticuser.username);
 	 }
-    case 2 ://select a user and then send a message used can be select eihter by address book or by write is name ;
+    case 2 ://select a user and then send a message user can be select eihter by address book or by write is name ;
 	 
       {PackageData tosend; 
 	tosend.to=selectuserto(s);//select the user to send the data to pass the socket to the 
@@ -258,9 +451,14 @@ do{
 	      }
 	  }while(i!=4);
       }//close case 2;
-    case 3:{addusertoadressbook(s);}
+    case 3:{
+	     if(addusertoadressbook(s)){perror("Error,Try Again")};
+	   }
+  
+    case 4:{
+	     serchMessages(s,afantasticuser.username);
+	   }	   
     	
-    	break;
         
     default: printf("This option is not avaible \n"); 
         

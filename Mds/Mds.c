@@ -10,9 +10,69 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #define SEM_NAME "/semaphore"//is the prefix in the name of every semaphore used for VDR
+#define SEM_NAMEUL"/semaphore/ul"//is the name of the semaphore for the userlist
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)// "Permessi del semaforo"
 #define INITIAL_VALUE 1//intial value of the semaphore 
 #define VDRN 1 //Number of vdr used
+int putalluser(int c ){
+   FILE 	*fp
+   sem_t 	*sem;//semaphore for lock the userlist file  while used
+   char 	(*tmp)[MAXLIMIT];
+   tmp=malloc(1*sizeof(char[MAXLIMIT]));//to store a  username files;
+   sem= sem_open(SEM_NAMEUL, O_RDWR);//open the semaphore 
+   if (sem == SEM_FAILED) {
+      perror("sem_open failed");
+      exit(EXIT_FAILURE);
+      }
+   //lock the semaphore 
+   //this part need a semaphore because this operation is plausible done by more client concurently 
+   sem_wait(sem);
+   //open all user list
+   if ((fp = fopen("usersList", "rb")))
+    {
+        fclose(fp);
+        return 1;
+    }
+   int i=0;
+   while(!feof(fp)){
+   //write the new user in the user list   
+   fread(tmp[i],sizeof(char[MAXLIMIT]),1,fp); 
+   tmp=realloc(tmp=i*sizeof(char[MAXLIMIT]));
+   i++;
+   }
+   i--;//becouse we increment before check;
+   fclose(fp);//close the file 
+   sem_post(sem);//decrement the counter 
+   if (sem_close(sem) < 0){//close the semaphore
+         perror("sem_close failed");
+         exit(0);}
+   //write the number of username you are about to send ;
+   if (write(c,&i,sizeof(int))<0) {
+	perror("write");
+	return 1;}
+   
+   for(int j=0;j<=i;j++){
+       if (write(c,&tmp[i],sizeof(char[MAXLIMIT]))<0) {
+	 perror("write");
+	 return 1;}
+
+   }
+   i=1;//send 1 to let know the client that you have done
+   if (write(c,&i,sizeof(int))<0) {
+	perror("write");
+	return 1;}
+   //wait aknowleg from client 
+   wait(100)
+   if (read(c,&i,sizeof(int))<0) {
+	perror("read");
+        return 1;}
+   //check return from client value anyway dont do nothing 
+   if (i!=5)perror("client dont respond");
+   free(tmp);     
+   return 0;
+
+   
+}
 //send a message to get stored in the vdr @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
 int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
    PackageData 	tosend;//the package to send to recive from client and send to the vdr
@@ -305,7 +365,7 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
 
             sem_post(sem);//unlock the semaphore "incresing counter"
 	    if (sem_close(sem) < 0){
-            perror("sem_close(3) failed");
+            perror("sem_close failed");
             exit(0);}
 	    //if retvdr==1 the user data is in that vdr so we can return here 
             if(retvdr==1)return i;           
@@ -320,11 +380,18 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
 //registration of a user 
 int registeru(userData afantasticuser){
    FILE *fp;
+   sem_t 	*sem;//semaphore for lock the userlist file  while used
+   sem= sem_open(SEM_NAMEUL, O_RDWR);//open the semaphore 
+   if (sem == SEM_FAILED) {
+      perror("sem_open failed");
+      exit(EXIT_FAILURE);
+      }
+
 
    // save the address of the file 
    char address[(MAXLIMIT+10)] = {'\0'};
-   sprintf(address, "users/%s.user", afantasticuser.username);
-    //check if the file alredy exist and if it is the case return 0
+   sprintf(address, "users/%s.user", afantasticuser.username);//check if the file alredy exist and if it is the case return 0
+
    if ((fp = fopen(address, "rb")))
     {
         fclose(fp);
@@ -342,7 +409,23 @@ int registeru(userData afantasticuser){
   
    fwrite(afantasticuser.password,sizeof(char[MAXLIMIT]),1,fp); 
    fclose(fp);
-   
+   //lock the semaphore 
+   //this part need a semaphore because this operation is plausible done by more client concurently 
+   sem_wait(sem);
+   //open all user list
+   if ((fp = fopen("usersList", "ab")))
+    {
+        fclose(fp);
+        return 0;
+    }
+   //write the new user in the user list   
+   fwrite(afantasticuser.username,sizeof(char[MAXLIMIT]),1,fp); 
+   fclose(fp);//close the file 
+   sem_post(sem);//decrement the counter 
+   if (sem_close(sem) < 0){//close the semaphore
+         perror("sem_close failed");
+         exit(0);}
+
    return 1;
 }
 //autenticate a user 
@@ -442,14 +525,20 @@ void dowork(int c,int vdrs[VDRN])
 			}
 		   }
 	       	
-	       	
+	       case 9://if the type of call is 9 you are asking for all user;
+		   { 
+		      if(putalluser(c)){perror("cant send users to client ");
+
+                     
+		   }
 	 	default:
-			break;
+		      {perror("Malicius client is plausible now i kill this child")
+		      type=5;}
 	 		
 	 }
 
 
-    }while(type!=5);//type 5 close the connection with the client 
+    }while(type!=5);//type 5 close the connection with the client  //can be used only by adminstrator 
 
 
     shutdown (c,2);
@@ -460,6 +549,7 @@ void main()
 {
       
     sem_t *semvdr[VDRN];//semphore to prevent two client from write to the same vdr using poisix semphore because more easy to menage
+    sem_t *semusl; //semaphore to prevent two client from write to userlist
     int s,c,len,vdr,vdrs[VDRN];//vdr is for the master socket of VDRS while on aceptance you have filled the array vdrs[VDRN],s is for the master socket for client while on aceptance you have the socket c 
     struct sockaddr_in saddr;
     int ops[3];
@@ -478,8 +568,14 @@ void main()
         perror("sem_open error");
         exit(EXIT_FAILURE);
     }
-    
-    }    
+    semusl = sem_open(SEM_NAMEUL, O_CREAT | O_EXCL, SEM_PERMS, INITIAL_VALUE);
+    if (semusl == SEM_FAILED) {
+        perror("sem_open error");
+        exit(EXIT_FAILURE);
+
+
+    }
+
     
 
     //create the stream socket for the VDRs
@@ -595,6 +691,10 @@ void main()
     close(s);
     //close vdr "Master socket"
     close(vdr);
+    //unlink and destroy the usersList semaphore
+    if (sem_unlink(SEM_NAMEUL) < 0) //unlink the semaphore
+    perror("sem_unlink failed");   
+    sem_destroy(semusl);
     //close each vdr socket   
     for(int i=0;i<=VDRN;i++){close(vdrs[i]);} 
     //unlink and destroy vdr named semaphore

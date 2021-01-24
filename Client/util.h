@@ -4,8 +4,9 @@
 **/
 #include <stdint.h>
 #include <string.h>
-#define MAXLIMIT    20
-#define FRAMESIZE   1024
+#define ADDRESSBOOKLIMIT 200
+#define MAXLIMIT    20 //limit for username and Password
+#define FRAMESIZE   1024//size of a audio Frame 
 #define TIMESTAMPS  26//the size of the string with time stamp;
 /**
   * @var frameIndex Contains the current frame to be processed.
@@ -23,7 +24,7 @@ typedef struct
 
 //int recordFLAC(AudioData data, const char *fileName);
 
-
+//Contains data about a user;
 typedef struct
 {
     int         type; //type is the type of package to be sent 1 for registration 2 for login 
