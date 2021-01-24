@@ -1,7 +1,16 @@
 # CSaP Project: A AudioMessagge sharing app that using Server-Client
 
-Tested on ArchLinux
-Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better compatibility
+Tested on ArchLinux.
+
+## Features
+
+Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better compatibility.
+
+Auto-crop silence in the message by analyzing peek frequency.
+
+Huge use of semaphore and parent-child processes(use POSIX semaphore insted of system five one)..
+
+
 
 ## Metadata Server (MDS)
 
@@ -15,7 +24,7 @@ Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better compat
 
 ### After initialization, the MDS waits for requests from clients which, upon authentication (usingname/password), could:
 
-###
+### 
 
 ## ONE or more Voice Data Repositories (VDR)
 
