@@ -8,21 +8,164 @@
 #include <string.h>
 #include <time.h>
 #include"util.h"
+//function that give an int value from a PackageData the return is int insted of long for be more light
+//max value of an int is 2,147,483,647 using a well tested algorithm like djb2 is usaly not enough for PackageData 
+int hashCode(PackageData tohash){
+
+  int i,ret;//return value
+  for(i=0;i<MAXLIMIT;i++){
+    ret=ret+((int)tohash.from[i]+33*(int)tohash.to);}//33 is the famus magic number
+    ret=ret+tohash.size;
+  for(i=0;i<TIMESTAMPS;i++)ret=ret+((int)tohash.timestamp[i]);
+
+  }
+
+}
+int sendMessage(PackageData tosend,int s){
+    //write the type  to MDS
+    if (write(s,&tosend.type,sizeof(tosend.type))<0) {
+	perror("write");
+	return 1;}
+ 
+    //write  the user from the data is sended 
+    if (write(s,&tosend.from,sizeof(tosend.from))<0) {
+	perror("write");
+	return 1;}
+    //write the user to the message is sended
+    if (write(s,&tosend.to,sizeof(tosend.to))<0) {
+	perror("write");
+	return 1;}
+    //write the size of audio data
+    if (write(s,&tosend.size,sizeof(tosend.size))<0) {
+	perror("write");
+	return 1;}
+    //write the audioData 
+    if (write(s,&tosend.message,tosend.size)<0) {
+	perror("write");
+	return 1;}
+
+    //write the hash
+    if (write(s,&tosend.hash,sizeof(tosend.hash))<0) {
+	perror("write");
+	return 1;}
+    //write timestamp
+    if (write(s,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
+	perror("write");
+	return 1;}
+
+    return 0;
+
+
+
+}
+//compare between two date in asctime format  return 1 if a>b 0 if b=a -1 if a<b using the asci value of number in predeterminated position 
+int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]){
+  int ma,mb; //mounth a and b;
+  if(a[22]>b[22])return 1; //check millenio 
+  else if(a[22]<b[22])return -1;
+ if(a[23]>b[23])return 1; //check hundreds of years 
+  else if(a[23]<b[23])return -1;
+ if(a[24]>b[24])return 1; //check decades 
+  else if(a[24]<b[24])return -1;
+ if(a[25]>b[25])return 1; //check  years 
+  else if(a[25]<b[25])return -1;
+ //now check mounth
+ //Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+  if(a[5]=="J"){
+    if(a[6]=="a")ma=1;
+    else{if(a[7]=="n")ma=6;
+	  ma=7;}
+    }
+  if(a[5]=="F")ma=2;
+  if(a[5]=="M"){
+    if(a[7]=="r")ma=3;
+    else ma=5;
+  }
+  if(a[5]=="A"){
+    if(a[6]=="p")ma=4;
+    else ma=8;
+  }
+  if(a[5]=="S")ma=9;
+  if(a[5]=="O")ma=10;
+  if(a[5]=="N")ma=11;
+  if(a[5]=="D")ma=12;
+
+  if(b[5]=="J"){
+    if(b[6]=="a")mb=1;
+    else{if(b[7]=="n")mb=6;
+	  mb=7;}
+    }
+  if(b[5]=="F")mb=2;
+  if(b[5]=="M"){
+    if(b[7]=="r")mb=3;
+    else mb=5;
+  }
+  if(b[5]=="A"){
+    if(b[6]=="p")mb=4;
+    else mb=8;
+  }
+  if(b[5]=="S")mb=9;
+  if(b[5]=="O")mb=10;
+  if(b[5]=="N")mb=11;
+  if(b[5]=="D")mb=12;
+//finaly i have got the months for both
+  if(ma>mb)return 1;
+  if(mb>ma)return -1;
+
+//looking for the day
+  if(a[10]>b[10])return 1;
+  if(a[10<b[10])return -1;
+  if(a[11]>b[11])return 1;
+  if(a[11]<b[11])return -1;
+//at this point we have the same date so return 0
+  return 0;
+}
+//function to tell mds to delate a message 
+int delateMessage(PackageData todel,int s){
+  int type=10; // type for this call;
+    //wirte the type in the socket
+  if (write(s,&type,sizeof(type))<0) {
+	perror("write");
+	return 1;
+      }
+
+  if(sendMessage(todel,s){perror("send Message"); return 1}
+  //check the return value from MDS;
+  if (read(s,&type,sizeof(type))<0) {
+	perror("read");
+	return 1;}
+  if(type)return 1;
+  else return 0;
+  }
+
+//function to search for a message in the inbox ;//download the inbox is not the best way, but make possible to do search more time without recall MDS //same method used by some  email client 
 int serchMessages(char user[MAXLIMIT,int s]){
+  char toserchu[MAXLIMIT];//the string to search for a user  ;
+  char toserchd[2][TIMESTAMPS];//the date between search
   int mdsRet;//return value from mds;
+  int k,t=0;//for select among user or date serch and valid or not ;
   int type=8;//the type of call for get all messages destinated to a user;
   int inboxn=checkinbox(s)//recall now because inbox number could change in small time 
   //PackageData *c=malloc(1*sizeof(PackageData));
   PackageData messageList[inboxn];
-    //wirte in the socket data for login or register
+    //wirte the type in the socket
 do{  if (write(s,&type,sizeof(type))<0) {
 	perror("write");
 	return 1;
      }
-    printf("##############");
+    printf("##############\n");
     printf("Serch for  messages\n");
-    printf("##############");
-    printf("");//to implement
+    printf("##############\n");
+    printf("1)search for a user messages\n");
+    printf("2) serch for messages in a date range\n");
+    printf("3)serch for a user messages in a date range  ")
+    scanf(%d,&k);
+    if(k==1||k==3)toserchu=selectuserto(s); 
+    if(k==2||k==3){printf("write the start date to search in format:es Sat Mar 25 06:10:10 1989  \n");
+		   scanf("%s",&toserchd[0]);
+		   printf("write the final date to search \n");
+		   scanf("%s",&toserchd[1]);}
+
 
     for(int i=0;i<inboxn;i++){
       if(read(s,&messageList[i].type,sizeof(messageList[i].type))<0){
@@ -76,45 +219,48 @@ do{  if (write(s,&type,sizeof(type))<0) {
 	  return 1;}
     int i;    
     for(i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
-      printf("%d)Message from %s sended %s\n",(inbox-i),messageList[i].from,messageList[i].timestamp);
+      t=0;
+      if(k==1||k==3)if(strcmp(messageList[i].from,toserchu)==0)t=1;//check fot the user 
+      if(k==2||k==3){if(datecmp(messageList[i].timestamp,toserchd[0])==1&&datecmp(toserchd[1],messageList[i]))t=1;//check for the date 
+		      else t=0;} 
+     if(t==1)printf("%d)Message from %s sended %s\n",(inbox-i),messageList[i].from,messageList[i].timestamp);
   
-      }
-
+      }}
     scanf("%d",&i);
-    if(i>=ninbox){printf("error message not found 404"); wait(1000); i=3;}//set a new value for i so you can back to all message;
-    else{
-      while(i<3){//if 3 the function reload all the message and you can list it again;
+    if(i>=inboxn){printf("error message not found 404"); wait(1000); i=4;}//set a new value for i so you can back to all message;
+    else if(i!=0){
+      while(i<4){//if 3 the function reload all the message and you can list it again;
       //playback the message
+      i=(inboxn-i);	
       playback(messageList[i].message);      
       printf("From %s \nTime:%s\n",messageList[i].from,messageList[i].timestamp);
       printf("1) for listen again \n");
       printf("2)to inoltrate the message\n");
-      printf("3)come back to inbox \n");
-      printf("4)go back to main page\n");
+      printf("3)to delete the message\n");
+      printf("4)come back to inbox \n");
+      printf("5)go back to main page\n");
       scanf("%d",&i);
      if(i==2){messageList[i].to=selectuserto(s); //inoltrate to a new user the message;
 	      messageList[i].from=username;
              if(sendMessage(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
-	      else{printf("MESSAGE SENT SUCESSFULLY\n");}
+	      else{printf("MESSAGE SENT SUCESSFULLY\n");
+	      i=4;} }
+    if(i==3){if(delateMessage(messageList[i],s))printf("MESSAGE NOT DELATED NETWORK PROBLEM TRY AGAIN\n");
+	      else{printf("MESSAGE DELATED SUCESSFULLY\n");
+		    i=4;//go back to inbox after delation}
+	      }	      
 		  
 
 	      }
           
 
       
-  }
-    }while(i!=4);
+  } } 
+    }while(i!=5 && i!=0);
 free(messageList);//good thing to do
 return 0;//return 0 in case of success;
   
    
-
-  
-
-
-
-
-
 
 }
 //add one user to the adressBook after check it it is or not enroled in the server 
@@ -294,10 +440,10 @@ do{  if (write(s,&type,sizeof(type))<0) {
 	perror("write");
 	return 1;
      }
-    printf("##############");
+    printf("##############\n");
     printf("INBOX\n");
-    printf("##############");
-    printf("SElECT MESSAGE");
+    printf("##############\n");
+    printf("SElECT MESSAGE OR 0 TO GO BACK TO MAIN MENU\n");
 
     for(int i=0;i<inboxn;i++){
       if(read(s,&messageList[i].type,sizeof(messageList[i].type))<0){
@@ -351,34 +497,41 @@ do{  if (write(s,&type,sizeof(type))<0) {
 	  return 1;}
     int i;    
     for(i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
-      printf("%d)Message from %s sended %s\n",(inbox-i),messageList[i].from,messageList[i].timestamp);
+      printf("%d)Message from %s sended %s\n",(inboxn-i),messageList[i].from,messageList[i].timestamp);
   
       }
 
     scanf("%d",&i);
-    if(i>=ninbox){printf("error message not found 404"); wait(1000); i=3;}//set a new value for i so you can back to all message;
-    else{
-      while(i<3){//if 3 the function reload all the message and you can list it again;
+    
+    if(i>=inboxn){printf("error message not found 404"); wait(1000); i=4;}//set a new value for i so you can back to all message;
+    else if(i!=0){
+      while(i<4){//if 3 the function reload all the message and you can list it again;
       //playback the message
-      playback(messageList[i].message);      
-      printf("From %s \nTime:%s\n",messageList[i].from,messageList[i].timestamp);
+      playback(messageList[(inboxn-i)].message);      
+      printf("From %s \nTime:%s\n",messageList[(inboxn-i)].from,messageList[(inboxn-i)].timestamp);
       printf("1) for listen again \n");
       printf("2)to inoltrate the message\n");
-      printf("3)come back to inbox \n");
-      printf("4)go back to main page\n");
+      printf("3)to delete the message\n");
+      printf("4)come back to inbox \n");
+      printf("5)go back to main page\n");
       scanf("%d",&i);
      if(i==2){messageList[i].to=selectuserto(s); //inoltrate to a new user the message;
 	      messageList[i].from=username;
-             if(sendMessage(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
-	      else{printf("MESSAGE SENT SUCESSFULLY\n");}
+             if(sendMessage(messageList[(inboxn-i)],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
+	      else{printf("MESSAGE SENT SUCESSFULLY\n");
+	      i=4;} }
+    if(i==3){if(delateMessage(messageList[(inboxn-i)],s))printf("MESSAGE NOT DELATED NETWORK PROBLEM TRY AGAIN\n");
+	      else{printf("MESSAGE DELATED SUCESSFULLY\n");
+		    i=4;//go back to inbox after delation}
+	      }	      
 		  
 
 	      }
           
 
       
-  }
-    }while(i!=4);
+  } } 
+    }while(i!=5 && i!=0);
 free(messageList);//good thing to do
 return 0;//return 0 in case of success;
   
