@@ -1,6 +1,16 @@
-# CSaP Project: A AudioMessagge sharing app that using Server-Client
+# CSaP Project: A AudioMessagge  application
 
-Tested on ArchLinux.
+Database-Server,Client-Server approch 
+
+Fully writen in C (Tested on ArchLinux) .
+
+## Parts:
+
+Client:Interact with the user;
+
+VDR: VoiceDataRepository,is aim is to store and update list of message of various user in an efficent way 
+
+MDS:Main server, interact with the user for authentication and operate between Client and VDR as intermediary
 
 ## Features
 
@@ -16,7 +26,7 @@ No TIme limit for audio rec has still reconized ;
 
 Huge use of semaphore and parent-child processes(use POSIX semaphore insted of system five one)..
 
-The project is highly scalable(you can add how much VDR you want )
+The project is highly scalable(you can add how much VDR you want ), but can still improve(es. Decentralized Mdss that can comunicate each other  )
 
 
 

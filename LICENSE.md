@@ -632,8 +632,9 @@ modification follow.
     state the exclusion of warranty; and each file should have at least
     the "copyright" line and a pointer to where the full notice is found.
     
-    <one line to give the program's name and a brief idea of what it does.>
-    Copyright (C) <year>  <name of author>
+    CSaP Project: A Audio Message Application in C
+    
+    Copyright (C)  2021  Matteo Bianchi
     
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
