@@ -10,11 +10,11 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #define SEM_NAME "/semaphore"//is the prefix in the name of every semaphore used for VDR
-#define SEM_NAMEUL"/semaphore/ul"//is the name of the semaphore for the userlist
+#define SEM_NAMEUL "/semaphore/ul"//is the name of the semaphore for the userlist
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)// "Permessi del semaforo"
 #define INITIAL_VALUE 1//intial value of the semaphore 
 #define VDRN 1 //Number of vdr used
-int delatefromvdr(int vdrs[VDRN],int vdrIndex int c){
+int delatefromvdr(char username[MAXLIMIT],int vdrs[VDRN],int vdrIndex, int c){
    PackageData 	tosend;//the package to send to recive from client and send to the vdr for delation
    sem_t 	*sem;//semaphore for lock the vdr while used
    int 		vdrToIndex;//the index of the vdr of the to username;
@@ -24,7 +24,7 @@ int delatefromvdr(int vdrs[VDRN],int vdrIndex int c){
 
 	perror("read");
 	return 1;}
-    if(tosend.type!=6){perror("TYPE INCOMPATIBILITY");return 1}
+    if(tosend.type!=6){perror("TYPE INCOMPATIBILITY");return 1;}
  
     //read the user from the data is sended 
     if (read(c,&tosend.from,sizeof(tosend.from))<0) {
@@ -57,7 +57,7 @@ int delatefromvdr(int vdrs[VDRN],int vdrIndex int c){
 	perror("hash is different");
 	return 1;}
     //ceck if the username is =to in this case we are sure is a user try to remove is messages ;
-    if (strcmp(username,tosend.to){
+    if (strcmp(username,tosend.to)!=0){
 	  perror("sombody is try to remove a message as anoter user");
 	  return 1;
 	  }
@@ -113,7 +113,7 @@ int delatefromvdr(int vdrs[VDRN],int vdrIndex int c){
       perror("sem_close failed");
       exit(0);}
   
-   wait(100)// wait for get a response from vdr ;
+   wait(100);// wait for get a response from vdr ;
    //read response from vdr
    if (read(vdrs[vdrToIndex],&vdrReturn,sizeof(vdrReturn))<0) {
 	perror("read");
@@ -123,10 +123,8 @@ int delatefromvdr(int vdrs[VDRN],int vdrIndex int c){
     return 1;
 
 }
-
-}
 int putalluser(int c ){
-   FILE 	*fp
+   FILE 	*fp;
    sem_t 	*sem;//semaphore for lock the userlist file  while used
    char 	(*tmp)[MAXLIMIT];
    tmp=malloc(1*sizeof(char[MAXLIMIT]));//to store a  username files;
@@ -148,7 +146,7 @@ int putalluser(int c ){
    while(!feof(fp)){
    //write the new user in the user list   
    fread(tmp[i],sizeof(char[MAXLIMIT]),1,fp); 
-   tmp=realloc(tmp=i*sizeof(char[MAXLIMIT]));
+   tmp=realloc(tmp,i*sizeof(char[MAXLIMIT]));
    i++;
    }
    i--;//becouse we increment before check;
@@ -173,7 +171,7 @@ int putalluser(int c ){
 	perror("write");
 	return 1;}
    //wait aknowleg from client 
-   wait(100)
+   wait(100);
    if (read(c,&i,sizeof(int))<0) {
 	perror("read");
         return 1;}
@@ -222,7 +220,7 @@ int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
 	perror("hash is different");
 	return 1;}
     //ceck if the username is =to the from ;
-    if (strcmp(username,tosend.from){
+    if (strcmp(username,tosend.from)==0){
 	  perror("sombody is try to send a message as anoter user");
 	  return 1;
 	  }
@@ -276,7 +274,7 @@ int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
       perror("sem_close failed");
       exit(0);}
   
-   wait(100)// wait for get a response from vdr ;
+   wait(100);// wait for get a response from vdr ;
    //read response from vdr
    if (read(vdrs[vdrToIndex],&vdrReturn,sizeof(vdrReturn))<0) {
 	perror("read");
@@ -289,10 +287,10 @@ int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
 //function to send all message destinated to a user; to that user;
 int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c){
    int vdrToType=8;//vdr type for this operation
-   int vdrRet,clientRet//return value from vdr;and client 
+   int vdrRet,clientRet;//return value from vdr;and client 
    int inboxN=giveInbox(username,vdrIndex,vdrs);//number of message to read;
    PackageData messageList[inboxN];//create the structure to conserve the data, Dinamic array here is plausible but not sense we know how many message to read;
-   sem_t *sem //poisix semaphore for comunicate with vdr without problem ;
+   sem_t *sem ;//poisix semaphore for comunicate with vdr without problem ;
    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
    sprintf(saddress, "%s.%d", SEM_NAME,vdrIndex);
    sem= sem_open(saddress, O_RDWR);//open the semaphore 
@@ -302,14 +300,14 @@ int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c)
       }
    sem_wait(sem);//lock the semaphore so you can write to the VDR socket without risk
    //send the type to the vdr
-   if (write(vdrs[vdrToIndex],&vdrToType,sizeof(int))<0) {
+   if (write(vdrs[vdrIndex],&vdrToType,sizeof(int))<0) {
 	perror("write");
 	return 1;}
    // send the username to the vdr ;
-   if (write(vdrs[vdrToIndex],&username,sizeof(username))<0) {
+   if (write(vdrs[vdrIndex],&username,sizeof(username))<0) {
 	perror("write");
 	return 1;}
-   for(int i=0,i<inboxN,i++){
+   for(int i=0;i<inboxN;i++){
       //read the data for every message package
       if(read(vdrs[vdrIndex],&messageList[i].type,sizeof(messageList[i].type))<0) {
 	 perror("read");
@@ -332,7 +330,7 @@ int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c)
 	return 1;}
 
       //read the hash
-      if (read(vdrs[vdrIndex],&messageList.hash,sizeof(messageList[i].hash))<0) {
+      if (read(vdrs[vdrIndex],&messageList[i].hash,sizeof(messageList[i].hash))<0) {
 	perror("read");
 	return 1;}
       //read timestamp
@@ -357,7 +355,7 @@ int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c)
 	return 1;}
         
 
-      if (write(c,&messageList[i].size,sizeof(tmp.size))<0) {
+      if (write(c,&messageList[i].size,sizeof(messageList[i].size))<0) {
 	perror("write");
 	return 1;}
         
@@ -393,12 +391,12 @@ int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c)
       exit(0);}
 
    //at this point we can send the return value also to the client for let know that sending is over 
-   if (write(c,&retvdr,sizeof(retvdr))<0) {
+   if (write(c,&vdrRet,sizeof(vdrRet))<0) {
 	perror("write");
 	return 1;}
    //and wait for a double check from client 
    if(read(c,&clientRet,sizeof(clientRet))<0){perror("write"); return 1;}
-   if(clientRet!=5){perror("clientRet value not valid")return 1;}
+   if(clientRet!=5){perror("clientRet value not valid"); return 1;}
 
    return 0;
 
@@ -465,7 +463,7 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
 		  perror("write");
 		  exit(1);}
 	    //write username to the socket
-	    if (write(vdrs[i],&usernameasizeof(username[MAXLIMIT]))<0) {
+	    if (write(vdrs[i],&username,sizeof(username[MAXLIMIT]))<0) {
 		  perror("write");
 		  exit(1);}
 	    wait(100);//give time to recive data and send the response from the i-th vdr process
@@ -638,14 +636,13 @@ void dowork(int c,int vdrs[VDRN])
 	       	
 	       case 9://if the type of call is 9 you are asking for all user;
 		   { 
-		      if(putalluser(c)){perror("cant send users to client ");
+		      if(putalluser(c)){perror("cant send users to client ");}
 
-                     
 		   }
 
 	       case 10://if the type of call is 10 you are asking for a delate from vdr;
 		      {int isDel=0;
-		       if(delatefromvdr(vdrIndex,vdrs,c,))
+		       if(delatefromvdr(afantasticuser.username,vdrs,vdrIndex,c))
 			 {perror("cant send users to client ");
 			  isDel=1;}
 		       //write the result to the socket 0 for success 1 for error
@@ -653,9 +650,10 @@ void dowork(int c,int vdrs[VDRN])
 			perror ("write");
 			exit (1);
 			}
+		      }
 
 	 	default:
-		      {perror("Malicius client is plausible now i kill this child")
+		      {perror("Malicius client is plausible now i kill this child");
 		      type=5;}
 	 		
 	 }
@@ -691,13 +689,13 @@ void main()
         perror("sem_open error");
         exit(EXIT_FAILURE);
     }
+    }
     semusl = sem_open(SEM_NAMEUL, O_CREAT | O_EXCL, SEM_PERMS, INITIAL_VALUE);
     if (semusl == SEM_FAILED) {
         perror("sem_open error");
         exit(EXIT_FAILURE);
-
-
-    }
+	 }
+	 
 
     
 
@@ -749,9 +747,10 @@ void main()
 
       //ceck if the response is valid and if its not close the connection 
       if(echo!=1){
-	   close(vdrs[runningvdr]); }else runningvdr++;
-     
-    }
+	   close(vdrs[runningvdr]); }
+      else runningvdr++;
+    } 
+    
 
 
     //create the stream socket for the client 

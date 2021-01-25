@@ -8,7 +8,7 @@
 #include <string.h>
 #include "util.h"
 //delate a message alredy store for a user
-delateMessage(int s){
+int delateMessage(int s){
  PackageData todel;//package to delate
  int 	     trov=0;//variabile to set if i have found and delate the file
     todel.type=6;
@@ -103,7 +103,7 @@ delateMessage(int s){
    fclose(fopen(address, "wb"));
    i=0;
    for(i;i<j;i++){
-      if(strcmp(todel.timestamp,tmp[i].timestamp)==0&&strcmp(todel.hash,tmp[i].hash)==0)trov=1;
+      if(strcmp(todel.timestamp,tmp[i].timestamp)==0&&todel.hash==tmp[i].hash)trov=1;
       else{ //store the data
 	 if(storetofile(todel)){
 	    perror("store");
@@ -124,6 +124,7 @@ delateMessage(int s){
 }
 //check if a user has ever logged here
 int checkuser(char user[MAXLIMIT]){
+   FILE *fp;
    char address[(MAXLIMIT+11)] = {'\0'};
 
    sprintf(address,"users/%sInbox",user);
@@ -246,7 +247,7 @@ int readandsendMessages(char user[MAXLIMIT],int s ){
    if (write(s,&closetype,sizeof(closetype))<0) {
     perror("write the closetype");
     return 0;}
-   free(tmp);
+   //if evrything goes fine return 1
    return 1;
       
 }

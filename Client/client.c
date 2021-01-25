@@ -8,19 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include"util.h"
-//function that give an int value from a PackageData the return is int insted of long for be more light
-//max value of an int is 2,147,483,647 using a well tested algorithm like djb2 is usaly not enough for PackageData 
-int hashCode(PackageData tohash){
-
-  int i,ret;//return value
-  for(i=0;i<MAXLIMIT;i++){
-    ret=ret+((int)tohash.from[i]+33*(int)tohash.to);}//33 is the famus magic number
-    ret=ret+tohash.size;
-  for(i=0;i<TIMESTAMPS;i++)ret=ret+((int)tohash.timestamp[i]);
-
-  }
-
-}
+//Function to send a message to MDS @Param PackageData:Struct that contains the message,and other value see util.h @Param s socket conected  to MDS
 int sendMessage(PackageData tosend,int s){
     //write the type  to MDS
     if (write(s,&tosend.type,sizeof(tosend.type))<0) {
@@ -58,68 +46,6 @@ int sendMessage(PackageData tosend,int s){
 
 
 }
-//compare between two date in asctime format  return 1 if a>b 0 if b=a -1 if a<b using the asci value of number in predeterminated position 
-int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]){
-  int ma,mb; //mounth a and b;
-  if(a[22]>b[22])return 1; //check millenio 
-  else if(a[22]<b[22])return -1;
- if(a[23]>b[23])return 1; //check hundreds of years 
-  else if(a[23]<b[23])return -1;
- if(a[24]>b[24])return 1; //check decades 
-  else if(a[24]<b[24])return -1;
- if(a[25]>b[25])return 1; //check  years 
-  else if(a[25]<b[25])return -1;
- //now check mounth
- //Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
-  if(a[5]=="J"){
-    if(a[6]=="a")ma=1;
-    else{if(a[7]=="n")ma=6;
-	  ma=7;}
-    }
-  if(a[5]=="F")ma=2;
-  if(a[5]=="M"){
-    if(a[7]=="r")ma=3;
-    else ma=5;
-  }
-  if(a[5]=="A"){
-    if(a[6]=="p")ma=4;
-    else ma=8;
-  }
-  if(a[5]=="S")ma=9;
-  if(a[5]=="O")ma=10;
-  if(a[5]=="N")ma=11;
-  if(a[5]=="D")ma=12;
-
-  if(b[5]=="J"){
-    if(b[6]=="a")mb=1;
-    else{if(b[7]=="n")mb=6;
-	  mb=7;}
-    }
-  if(b[5]=="F")mb=2;
-  if(b[5]=="M"){
-    if(b[7]=="r")mb=3;
-    else mb=5;
-  }
-  if(b[5]=="A"){
-    if(b[6]=="p")mb=4;
-    else mb=8;
-  }
-  if(b[5]=="S")mb=9;
-  if(b[5]=="O")mb=10;
-  if(b[5]=="N")mb=11;
-  if(b[5]=="D")mb=12;
-//finaly i have got the months for both
-  if(ma>mb)return 1;
-  if(mb>ma)return -1;
-
-//looking for the day
-  if(a[10]>b[10])return 1;
-  if(a[10<b[10])return -1;
-  if(a[11]>b[11])return 1;
-  if(a[11]<b[11])return -1;
-//at this point we have the same date so return 0
-  return 0;
-}
 //function to tell mds to delate a message 
 int delateMessage(PackageData todel,int s){
   int type=10; // type for this call;
@@ -129,7 +55,7 @@ int delateMessage(PackageData todel,int s){
 	return 1;
       }
 
-  if(sendMessage(todel,s){perror("send Message"); return 1}
+  if(sendMessage(todel,s)){perror("send Message"); return 1;}
   //check the return value from MDS;
   if (read(s,&type,sizeof(type))<0) {
 	perror("read");
@@ -139,13 +65,13 @@ int delateMessage(PackageData todel,int s){
   }
 
 //function to search for a message in the inbox ;//download the inbox is not the best way, but make possible to do search more time without recall MDS //same method used by some  email client 
-int serchMessages(char user[MAXLIMIT,int s]){
+int serchMessages(char user[MAXLIMIT],int s){
   char toserchu[MAXLIMIT];//the string to search for a user  ;
   char toserchd[2][TIMESTAMPS];//the date between search
   int mdsRet;//return value from mds;
-  int k,t=0;//for select among user or date serch and valid or not ;
+  int k,i,t=0;//for select among user or date serch and valid or not ;
   int type=8;//the type of call for get all messages destinated to a user;
-  int inboxn=checkinbox(s)//recall now because inbox number could change in small time 
+  int inboxn=checkinbox(s);//recall now because inbox number could change in small time 
   //PackageData *c=malloc(1*sizeof(PackageData));
   PackageData messageList[inboxn];
     //wirte the type in the socket
@@ -158,9 +84,9 @@ do{  if (write(s,&type,sizeof(type))<0) {
     printf("##############\n");
     printf("1)search for a user messages\n");
     printf("2) serch for messages in a date range\n");
-    printf("3)serch for a user messages in a date range  ")
-    scanf(%d,&k);
-    if(k==1||k==3)toserchu=selectuserto(s); 
+    printf("3)serch for a user messages in a date range\n");
+    scanf("%d",&k);
+    if(k==1||k==3) selectuserto(s,toserchu); 
     if(k==2||k==3){printf("write the start date to search in format:es Sat Mar 25 06:10:10 1989  \n");
 		   scanf("%s",&toserchd[0]);
 		   printf("write the final date to search \n");
@@ -223,9 +149,9 @@ do{  if (write(s,&type,sizeof(type))<0) {
       if(k==1||k==3)if(strcmp(messageList[i].from,toserchu)==0)t=1;//check fot the user 
       if(k==2||k==3){if(datecmp(messageList[i].timestamp,toserchd[0])==1&&datecmp(toserchd[1],messageList[i]))t=1;//check for the date 
 		      else t=0;} 
-     if(t==1)printf("%d)Message from %s sended %s\n",(inbox-i),messageList[i].from,messageList[i].timestamp);
+     if(t==1)printf("%d)Message from %s sended %s\n",(inboxn-i),messageList[i].from,messageList[i].timestamp);
   
-      }}
+      }
     scanf("%d",&i);
     if(i>=inboxn){printf("error message not found 404"); wait(1000); i=4;}//set a new value for i so you can back to all message;
     else if(i!=0){
@@ -240,8 +166,8 @@ do{  if (write(s,&type,sizeof(type))<0) {
       printf("4)come back to inbox \n");
       printf("5)go back to main page\n");
       scanf("%d",&i);
-     if(i==2){messageList[i].to=selectuserto(s); //inoltrate to a new user the message;
-	      messageList[i].from=username;
+     if(i==2){selectuserto(s,messageList[i].to); //inoltrate to a new user the message;
+	      strcpy(messageList[i].from,user);
              if(sendMessage(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
 	      else{printf("MESSAGE SENT SUCESSFULLY\n");
 	      i=4;} }
@@ -274,7 +200,7 @@ int addusertoadressbook(int s){
       // Program exits if file pointer returns NULL.
       return 1;
     }
-  int j=0;
+   j=0;
 
   while (!feof(fp)){// while not end of file
            fread(usernameList[j],sizeof(char[MAXLIMIT]),1,fp);
@@ -303,18 +229,19 @@ int addusertoadressbook(int s){
 	perror("write");
 	return 1;}
   if(j<1){perror("problem with MDS"); return 1;}
-  int usernameList[j][MAXLIMIT];
+  //crate an array with all username 
+  char  usernameListS[j][MAXLIMIT];
   trov=0;//set trov =1 when we find a matching 
 
   //read all username and print it 
   for(int k=0;k<j;j++){
     //read from socket and print for the user
-    if (read(s,&usernameList[k],sizeof(char[MAXLIMIT]))<0) {
+    if (read(s,&usernameListS[k],sizeof(char[MAXLIMIT]))<0) {
 	perror("write");
 	return 1;}
-    if(strcmp(usernameList[k],toadd)=0)trov=1;
+    if(strcmp(usernameListS[k],toadd)==0)trov=1;
   }
-  if (read(s,&type,sizeof(int)<0) {
+  if (read(s,&type,sizeof(int))<0) {
 	perror("write");
         return 1;}
   //type is used to store the end of trasmission from MDS;	
@@ -342,8 +269,9 @@ int addusertoadressbook(int s){
 
 
  
-}    
-const char * selectuserto(int s){
+}
+//function to select a user form addressbook or from all user @param s:socket to MDS,@param *tmp string  to save the user to;
+int  selectuserto(int s,char *tmp){
   int j,i=0;//j is the nuber of user actualy in server
   printf("1)search from adressBook\n");
   printf("2)search from all user\n");
@@ -369,13 +297,12 @@ const char * selectuserto(int s){
       j--;//becouse you encrement before re enter
       fclose(fp);//close the file for now
       int k;
-      do{scanf(%d,&k);
+      do{scanf("%d",&k);
 	 if(k>j)printf("this number is still not presnt");
 	}while(k>j);
-      char tmp[MAXLIMIT];
-      strcpy(tmp,userList[i]);
+      strcpy(tmp,usernameList[i]);
       free(usernameList[i]);//fre the user list not useful anymore;
-      return tmp;
+      return 1;
 
       }
 
@@ -389,7 +316,7 @@ const char * selectuserto(int s){
 	perror("write");
 	return 1;}
     if(j<1){perror("problem with MDS"); return 1;}
-    int usernameList[j][MAXLIMIT];
+    char usernameList[j][MAXLIMIT];
 
     //read all username and print it 
     for(int k=0;k<j;j++){
@@ -400,7 +327,7 @@ const char * selectuserto(int s){
       printf("%d,%s\n",(k+1),usernameList[k]);
       
       }
-    if (read(s,&type,sizeof(int)<0) {
+    if (read(s,&type,sizeof(int))<0) {
 	  perror("write");
 	  return 1;}
     //type is used to store the end of trasmission from MDS;	
@@ -418,10 +345,9 @@ const char * selectuserto(int s){
       if (i>j)printf("This user is still not in list try again \n");
       }while(i>j);
 
-    char tmp[MAXLIMIT];
     strcpy(tmp,usernameList[i]);
     free(usernameList[i]);//fre the user list not useful anymore;
-    return tmp;
+    return 0;
     }
 
 
@@ -431,8 +357,9 @@ const char * selectuserto(int s){
 //list all mesage sended to this user contact the MDS to get data, is an interactive function 
 int listallmessage(int s,char username[MAXLIMIT]){
   int mdsRet;//return value from mds;
+  int i=0;
   int type=8;//the type of call for get all messages destinated to a user;
-  int inboxn=checkinbox(s)//recall now because inbox number could change in small time 
+  int inboxn=checkinbox(s);//recall now because inbox number could change in small time 
   //PackageData *c=malloc(1*sizeof(PackageData));
   PackageData messageList[inboxn];
     //wirte in the socket data for login or register
@@ -495,9 +422,9 @@ do{  if (write(s,&type,sizeof(type))<0) {
 	  perror("read");
 	  free(messageList);
 	  return 1;}
-    int i;    
+
     for(i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
-      printf("%d)Message from %s sended %s\n",(inboxn-i),messageList[i].from,messageList[i].timestamp);
+    printf("%d)Message from %s sended %s\n",(inboxn-i),messageList[i].from,messageList[i].timestamp);
   
       }
 
@@ -515,8 +442,8 @@ do{  if (write(s,&type,sizeof(type))<0) {
       printf("4)come back to inbox \n");
       printf("5)go back to main page\n");
       scanf("%d",&i);
-     if(i==2){messageList[i].to=selectuserto(s); //inoltrate to a new user the message;
-	      messageList[i].from=username;
+     if(i==2){selectuserto(s,messageList[i].to); //inoltrate to a new user the message;
+	      strcpy(messageList[i].from,username);
              if(sendMessage(messageList[(inboxn-i)],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
 	      else{printf("MESSAGE SENT SUCESSFULLY\n");
 	      i=4;} }
@@ -561,15 +488,15 @@ int login(userData u, int t,int  s ){
   }
 
 //return number of massage stored actualy in Inbox 
-int checkinbox(s){
-  int ret,type=7 //7 is the type for this call
+int checkinbox(int s){
+  int ret,type=7; //7 is the type for this call
     //write type in the socket
     if (write(s,&type,sizeof(type))<0) {
 	perror("write");
 	exit(1);
     }
     //then the socket should return the number of massage
-    if (read(s,&ret,sizeof(t))<0) {
+    if (read(s,&ret,sizeof(ret))<0) {
 	perror("read");
 	exit(1); }
   return ret;
@@ -581,11 +508,11 @@ int main(int argc, char *argv[])
 	      printf("\nUsage:\n\t%s <User> <Password>\nOr no argument and wait for prompt\n",argv[0]);
 	      exit(1);
               }
-printf("\033[0;36m");   
+//printf("\033[0;36m");   
 printf("____________________________________________");
 printf("Welocome to AudioMessage ");
 printf("--------------------------------------------- \n");
-printf(“\033[0m”); 
+//printf(“\033[0m”); 
 int s,t=0;
 //inizialize userData
 userData afantastic;
@@ -666,28 +593,28 @@ do{ if(t==0){printf("1)Login\n");
 printf("Welcome Back %s \n",afantastic.username );
 int i;
 do{
-  printf("%d inbox messages for you \n",checkinbox(afantastic,s));
+  printf("%d inbox messages for you \n",checkinbox(s));
   printf("1) show the new messages \n");
   printf("2) send a new message \n");
   printf("3) add new contact in the address book \n ");
   printf("4) search messages\n");
-  ptintf("9)EXIT\n");
+  printf("9)EXIT\n");
   scanf("%d",&i);
   switch (i) {
     case 1:{
-	   listallmessage(s,afantasticuser.username);
+	   listallmessage(s,afantastic.username);
 	 }
     case 2 ://select a user and then send a message user can be select eihter by address book or by write is name ;
 	 
       {PackageData tosend; 
-	tosend.to=selectuserto(s);//select the user to send the data to pass the socket to the 
+       selectuserto(s,tosend.to);//select the user to send the data to pass the socket to the 
 	tosend.message = recordP();
 	tosend.size=sizeof(tosend.message);
-	tosend.from=afantastic.username;
+        strcpy(tosend.from,afantastic.username);
 	time_t ltime; /* calendar time */
         ltime=time(NULL); /* get current cal time */
-	tosend.timestamp=asctime( localtime(&ltime));//Get a timestamp of the actual moment in a redable format;
-	tosend.hash=hashCode(PackageData);
+	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
+	tosend.hash=hashCode(tosend);
         do{ printf("1) send the message\n");
 	    printf("2) listen the message before send it\n");
 	    printf("3) to return to the main menu\n");
@@ -704,17 +631,17 @@ do{
 		  }
 	      }
 	    if(i==2)playback(tosend.message);//playback the audio registered
-	    if (i==4){tosend.to=selectuserto(s);
+	    if (i==4){selectuserto(s,tosend.to);
 		      tosend.hash=hashCode(tosend);
 	      }
 	  }while(i!=4);
       }//close case 2;
     case 3:{
-	     if(addusertoadressbook(s)){perror("Error,Try Again")};
+	     if(addusertoadressbook(s)){perror("Error,Try Again");}
 	   }
   
     case 4:{
-	     serchMessages(s,afantasticuser.username);
+	     serchMessages(afantastic.username,s);
 	   }	   
     	
         
