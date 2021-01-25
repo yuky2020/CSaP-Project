@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #define SEM_NAME "/semaphore"//is the prefix in the name of every semaphore used for VDR
-#define SEM_NAMEUL "/semaphore/ul"//is the name of the semaphore for the userlist
+#define SEM_NAMEUL "/semaphoreul"//is the name of the semaphore for the userlist
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)// "Permessi del semaforo"
 #define INITIAL_VALUE 1//intial value of the semaphore 
 #define VDRN 1 //Number of vdr used
@@ -65,7 +65,7 @@ int delatefromvdr(char username[MAXLIMIT],int vdrs[VDRN],int vdrIndex, int c){
    vdrToIndex=getvdrIndex(tosend.to,vdrs);
    //now open and lock the semaphore 
    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
-   sprintf(saddress, "%s.%d", SEM_NAME,vdrToIndex);
+   sprintf(saddress, "%s%d", SEM_NAME,vdrToIndex);
    sem= sem_open(saddress, O_RDWR);//open the semaphore 
    if (sem == SEM_FAILED) {
       perror("sem_open failed");
@@ -228,7 +228,7 @@ int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
    vdrToIndex=getvdrIndex(tosend.to,vdrs);
    //now open and lock the semaphore 
    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
-   sprintf(saddress, "%s.%d", SEM_NAME,vdrToIndex);
+   sprintf(saddress, "%s%d", SEM_NAME,vdrToIndex);
    sem= sem_open(saddress, O_RDWR);//open the semaphore 
    if (sem == SEM_FAILED) {
       perror("sem_open failed");
@@ -292,7 +292,7 @@ int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c)
    PackageData messageList[inboxN];//create the structure to conserve the data, Dinamic array here is plausible but not sense we know how many message to read;
    sem_t *sem ;//poisix semaphore for comunicate with vdr without problem ;
    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
-   sprintf(saddress, "%s.%d", SEM_NAME,vdrIndex);
+   sprintf(saddress, "%s%d", SEM_NAME,vdrIndex);
    sem= sem_open(saddress, O_RDWR);//open the semaphore 
    if (sem == SEM_FAILED) {
       perror("sem_open failed");
@@ -409,7 +409,7 @@ int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
    int vdrtype=7; //7 is the type to write in the socket for this call
    int inboxvdr=0; //the buffer for the returning value    
    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
-   sprintf(saddress, "%s.%d", SEM_NAME,vdrIndex);
+   sprintf(saddress, "%s%d", SEM_NAME,vdrIndex);
    sem= sem_open(saddress, O_RDWR);//open the semaphore 
    if (sem == SEM_FAILED) {
       perror("sem_open failed");
@@ -451,7 +451,7 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
    for(int i=0;i<VDRN;i++){
 	    sem_t *sem;
 	    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
-	    sprintf(saddress, "%s.%d", SEM_NAME,i);
+	    sprintf(saddress, "%s%d", SEM_NAME,i);
             sem= sem_open(saddress, O_RDWR);//open the semaphore 
             if (sem == SEM_FAILED) {
             perror("sem_open failed");
@@ -681,7 +681,7 @@ void main()
     //create semaphores for vdr
     for(int j=0;j<VDRN;j++){
     char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the j vdr 
-    sprintf(saddress, "%s.%d", SEM_NAME,j);
+    sprintf(saddress, "%s%d", SEM_NAME,j);
 
     // create, initialize semaphore
     semvdr[j] = sem_open(saddress, O_CREAT | O_EXCL, SEM_PERMS, INITIAL_VALUE);
@@ -822,7 +822,7 @@ void main()
     //unlink and destroy vdr named semaphore
     for(int j=0;j<VDRN;j++){
     char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the j vdr 
-    sprintf(saddress, "%s.%d", SEM_NAME,j);
+    sprintf(saddress, "%s%d", SEM_NAME,j);
 
     if (sem_unlink(saddress) < 0) //unlink the semaphore
     perror("sem_unlink failed");   
