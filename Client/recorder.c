@@ -143,7 +143,7 @@ AudioDataf recordP(void)
     if((err = Pa_StartStream(stream))) goto done;
     int i=0;
     printf("=======================================================\n");
-    printf("inizio registrazione premi un tasto ed enter quando hai finito\n");
+    printf("inizio registrazione premi e ed enter quando hai finito\n");
     printf("=======================================================\n");
     
    switch(fork()) {
@@ -159,8 +159,13 @@ AudioDataf recordP(void)
             perror("sem_open(3) failed");
             exit(EXIT_FAILURE);
             }
+            char e="e";
+            char ef;
+            do{
             wait(1000);//time for start registration from child
-            getchar();//wait for a key form tty
+            scanf("%c",&ef);}while(e!=ef);
+            
+            //wait for a key form tty
             sem_wait(sem1); //lock the semaphore so the child know that has to stop working
             if (sem_close(sem1) < 0)
             perror("sem_close(3) failed");
