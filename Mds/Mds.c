@@ -722,7 +722,7 @@ void main()
     }
     puts("listen done");
 
-    while(runningvdr<=VDRN){
+    while(runningvdr<VDRN){
       len = sizeof (saddr);
       if ((vdrs[runningvdr] = accept (vdr, (struct sockaddr *) &saddr, &len)) < 0) {
 	    perror ("accept");

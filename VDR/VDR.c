@@ -410,7 +410,7 @@ void main(int argc, char *argv[])
     puts("socket done");
 
     // Determine host address by its network name
-    if ((hst=gethostbyname(hostname))==NULL) {
+    if ((hst=gethostbyname("localhost"))==NULL) {
 	perror("gethostbyname");
 	exit(1);
     }

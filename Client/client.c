@@ -196,9 +196,11 @@ int addusertoadressbook(int s){
   char toadd[MAXLIMIT];//username to add to the adressBook;
   int j,trov,i=0;//for save the number of user and for going trought it 
   if ((fp = fopen("AdressBook", "rb")) == NULL) {
-      perror(" opening file");
-      // Program exits if file pointer returns NULL.
-      return 1;
+       fclose(fp);
+       fp=fopen("AdressBook","wb");
+       fclose(fp);
+       fp = fopen("AdressBook", "rb"); 
+      perror("NoAdressBoook found i crate one");
     }
    j=0;
 
@@ -552,7 +554,7 @@ fclose(config);
     puts("socket done");
 
     // Determine host address by its network name
-    if ((hst=gethostbyname(hostname))==NULL) {
+    if ((hst=gethostbyname("localhost"))==NULL) {
 	perror("gethostbyname");
 	exit(1);
     }
@@ -606,14 +608,16 @@ do{
 	 }
     case 2 ://select a user and then send a message user can be select eihter by address book or by write is name ;
 	 
-      {PackageData tosend; 
+      {PackageData tosend;
+	AudioDataf messagetosend;
        selectuserto(s,tosend.to);//select the user to send the data to pass the socket to the 
-	tosend.message = recordP();
+	messagetosend = recordP();
 	tosend.size=sizeof(tosend.message);
         strcpy(tosend.from,afantastic.username);
 	time_t ltime; /* calendar time */
         ltime=time(NULL); /* get current cal time */
 	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
+	tosend.message=messagetosend;
 	tosend.hash=hashCode(tosend);
         do{ printf("1) send the message\n");
 	    printf("2) listen the message before send it\n");
