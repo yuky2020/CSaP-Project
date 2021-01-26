@@ -8,6 +8,15 @@
 #include <string.h>
 #include <time.h>
 #include"util.h"
+//write in  the socket type=5,so Mds whill close child process;
+int disconnect(int s){
+  int type=5;
+  if (write(s,&type,sizeof(type))<0) {
+	perror("write");
+	return 0;}
+  return 1;
+
+}
 //Function to send a message to MDS @Param PackageData:Struct that contains the message,and other value see util.h @Param s socket conected  to MDS
 int sendMessage(PackageData tosend,int s){
     //write the type  to MDS
@@ -648,7 +657,9 @@ do{
 	     serchMessages(afantastic.username,s);
 	   }	   
     	
-        
+    case 9:{if(disconnect(s)){printf("error in disconection try again");i=5;}//disconnect from the mds return 1 in case of error
+
+	   }    
     default: printf("This option is not avaible \n"); 
         
     }

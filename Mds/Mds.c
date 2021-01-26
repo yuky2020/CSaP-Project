@@ -137,7 +137,7 @@ int putalluser(int c ){
    //this part need a semaphore because this operation is plausible done by more client concurently 
    sem_wait(sem);
    //open all user list
-   if ((fp = fopen("usersList", "rb")))
+   if (!(fp = fopen("usersList", "rb")))
     {
         fclose(fp);
         return 1;
@@ -499,8 +499,8 @@ int registeru(userData afantasticuser){
 
    // save the address of the file 
    char address[(MAXLIMIT+10)] = {'\0'};
-   sprintf(address, "users/%s.user", afantasticuser.username);//check if the file alredy exist and if it is the case return 0
-
+   sprintf(address, "users/%s.user", afantasticuser.username);
+   //check if the file alredy exist and if it is the case return 0
    if ((fp = fopen(address, "rb")))
     {
         fclose(fp);
@@ -522,7 +522,7 @@ int registeru(userData afantasticuser){
    //this part need a semaphore because this operation is plausible done by more client concurently 
    sem_wait(sem);
    //open all user list
-   if ((fp = fopen("usersList", "ab")))
+   if (!(fp = fopen("usersList", "ab")))
     {
         fclose(fp);
         return 0;
@@ -652,6 +652,7 @@ void dowork(int c,int vdrs[VDRN])
 			}
 		      }
 
+	       case 5:{printf("CHILD-CLOSE  REQUESTED");}
 	 	default:
 		      {perror("Malicius client is plausible now i kill this child");
 		      type=5;}
@@ -659,7 +660,7 @@ void dowork(int c,int vdrs[VDRN])
 	 }
 
 
-    }while(type!=5);//type 5 close the connection with the client  //can be used only by adminstrator 
+    }while(type!=5);//type 5 close the connection with the client  //can be used only when the client want do disconect 
 
 
     shutdown (c,2);
@@ -704,7 +705,7 @@ void main()
 	perror("socket");
 	exit(1);
     }
-    puts("client socket done");
+    puts("client socket done waiting for all vdr connection and echo each one ");
 
     saddr.sin_family=AF_INET;
     saddr.sin_port=htons(16000);
@@ -720,7 +721,7 @@ void main()
 	perror("listen");
 	exit(1);
     }
-    puts("listen done");
+    puts("listen done waiting connection");
 
     while(runningvdr<VDRN){
       len = sizeof (saddr);
