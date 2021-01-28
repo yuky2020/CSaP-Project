@@ -17,7 +17,7 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#define SEM_NAME "/semaphore_123"
+#define SEM_NAME "/semaphore_12345678910"
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
 #define INITIAL_VALUE 1
 #define FRAMES_PER_BUFFER 1024
@@ -159,11 +159,9 @@ AudioDataf recordP(void)
             perror("sem_open(3) failed");
             exit(EXIT_FAILURE);
             }
-            char e="e";
-            char ef;
-            do{
-            wait(1000);//time for start registration from child
-            scanf("%c",&ef);}while(e!=ef);
+            char ef;//carattere di chiusura
+            sleep(3);//time for start registration from child
+            getchar();
             
             //wait for a key form tty
             sem_wait(sem1); //lock the semaphore so the child know that has to stop working
@@ -178,9 +176,9 @@ AudioDataf recordP(void)
                //sem_wait(sem1); // Lock the semaphore
                err = Pa_ReadStream(stream, sampleBlock.snippet, FRAMES_PER_BUFFER);
                if (err) goto done;
-               else if(avg(sampleBlock.snippet, FRAMES_PER_BUFFER) > 0.000550) // talking
+               else if(avg(sampleBlock.snippet, FRAMES_PER_BUFFER) > 0.000550) // talking,take only the part of audio with talking signal 
                      {
-                         //printf("You're talking! %d\n", i);
+                       //  printf("You're talking! %d\n", i); for test use only
                         i++;
                         time(&talking);
                         data.recordedSamples = realloc(data.recordedSamples, sampleBlock.size * i);

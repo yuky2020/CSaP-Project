@@ -162,7 +162,7 @@ do{  if (write(s,&type,sizeof(type))<0) {
   
       }
     scanf("%d",&i);
-    if(i>=inboxn){printf("error message not found 404"); wait(1000); i=4;}//set a new value for i so you can back to all message;
+    if(i>=inboxn){printf("error message not found 404"); sleep(1); i=4;}//set a new value for i so you can back to all message;
     else if(i!=0){
       while(i<4){//if 3 the function reload all the message and you can list it again;
       //playback the message
@@ -311,8 +311,8 @@ int  selectuserto(int s,char *tmp){
       do{scanf("%d",&k);
 	 if(k>j)printf("this number is still not presnt");
 	}while(k>j);
-      strcpy(tmp,usernameList[i]);
-      free(usernameList[i]);//fre the user list not useful anymore;
+      strcpy(tmp,usernameList[(k+1)]);
+    //  free(usernameList);//fre the user list not useful anymore;
       return 1;
 
       }
@@ -322,24 +322,25 @@ int  selectuserto(int s,char *tmp){
     if (write(s,&type,sizeof(type))<0) {
 	perror("write");
 	return 1;}
-   	
+    	
     if (read(s,&j,sizeof(int))<0) {
 	perror("write");
 	return 1;}
+    //at the lest there is one user 
     if(j<1){perror("problem with MDS"); return 1;}
-    char usernameList[j][MAXLIMIT];
-
+      char usernameList[j][MAXLIMIT];
+      //char usernameList[MAXLIMIT][MAXLIMIT]; here for testing pourpose
     //read all username and print it 
     for(int k=0;k<j;j++){
       //read from socket and print for the user
       if (read(s,&usernameList[k],sizeof(char[MAXLIMIT]))<0) {
 	  perror("write");
 	  return 1;}
-      printf("%d,%s\n",(k+1),usernameList[k]);
+      printf("%d  %s\n",(k+1),usernameList[k]);
       
       }
     if (read(s,&type,sizeof(int))<0) {
-	  perror("write");
+	  perror("read");
 	  return 1;}
     //type is used to store the end of trasmission from MDS;	
     if(type!=1) {
@@ -357,7 +358,7 @@ int  selectuserto(int s,char *tmp){
       }while(i>j);
 
     strcpy(tmp,usernameList[i]);
-    free(usernameList[i]);//fre the user list not useful anymore;
+    //free(usernameList);//fre the user list not useful anymore;
     return 0;
     }
 
@@ -441,7 +442,7 @@ do{  if (write(s,&type,sizeof(type))<0) {
 
     scanf("%d",&i);
     
-    if(i>=inboxn){printf("error message not found 404"); wait(1000); i=4;}//set a new value for i so you can back to all message;
+    if(i>=inboxn){printf("error message not found 404"); sleep(1); i=4;}//set a new value for i so you can back to all message;
     else if(i!=0){
       while(i<4){//if 3 the function reload all the message and you can list it again;
       //playback the message
@@ -619,10 +620,10 @@ do{
 	 
       {PackageData tosend;
 	AudioDataf messagetosend;
-       selectuserto(s,tosend.to);//select the user to send the data to pass the socket to the 
 	messagetosend = recordP();
 	tosend.size=sizeof(tosend.message);
         strcpy(tosend.from,afantastic.username);
+	if(selectuserto(s,tosend.to))perror("Problem with mds");//select the user to send the data to pass the socket to the 
 	time_t ltime; /* calendar time */
         ltime=time(NULL); /* get current cal time */
 	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
