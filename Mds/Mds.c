@@ -864,7 +864,7 @@ int main()
     //unlink and destroy the usersList semaphore
     if (sem_unlink(SEM_NAMEUL) < 0) //unlink the semaphore
     perror("sem_unlink failed");   
-    sem_destroy(semusl);
+     sem_destroy(semusl);
     //close each vdr socket   
     for(int i=0;i<=VDRN;i++){close(vdrs[i]);} 
     //unlink and destroy vdr named semaphore
@@ -874,6 +874,7 @@ int main()
 
     if (sem_unlink(saddress) < 0) //unlink the semaphore
     perror("sem_unlink failed");   
-    sem_destroy(semvdr[j]);//destroy the semaphore after usage good pratice
+     sem_destroy(semvdr[j]);//destroy the semaphore after usage good pratice
     }
+    
 }
