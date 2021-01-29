@@ -26,14 +26,14 @@ int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]){
   if((int)a[22]>(int)b[22])return 1; //check millenio 
   else if((int)a[22]<(int)b[22])return -1;
  if((int)a[23]>(int)b[23])return 1; //check hundreds of years 
-  else if((int)a[23]<(int)b[23])return -1;
+ else if((int)a[23]<(int)b[23])return -1;
  if((int)a[24]>(int)b[24])return 1; //check decades 
-  else if((int)a[24]<(int)b[24])return -1;
+ else if((int)a[24]<(int)b[24])return -1;
  if((int)a[25]>(int)b[25])return 1; //check  years 
-  else if((int)a[25]<(int)b[25])return -1;
+ else if((int)a[25]<(int)b[25])return -1;
  //now check mounth
  //Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
-  if((int)a[5]=="J"){
+  if( (int)a[5]==(int)"J"){
     if(a[6]=="a")ma=1;
     else{if(a[7]=="n")ma=6;
 	  ma=7;}

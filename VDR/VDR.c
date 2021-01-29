@@ -458,8 +458,13 @@ do{
     //type seven for get ninbox
     if(type==7){
 	char user[MAXLIMIT];
+        int len;
+        //read the len of the user you are about to recive
+         if (read(s,&len,sizeof(int))<0) {
+	perror("read");
+	exit(1);}
 	//read the username to search inbox;
-        if (read(s,&user,sizeof(user))<0) {
+        if (read(s,user,len+1)<0) {
 	perror("read");
 	exit(1);}
         //socret= ninbox is 0 either if the file with ninbox dosen't esist or if ninbox=0;

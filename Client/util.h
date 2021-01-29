@@ -49,3 +49,4 @@ typedef struct
     char        timestamp[TIMESTAMPS];
 }PackageData; 
 int hashCode(PackageData);//is the hashCode for a package; 
+int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]);

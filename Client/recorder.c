@@ -70,7 +70,7 @@ float avg(float *data, size_t length)
 }
 
 /**
- * @fn storeFLAC was more a test for how to store data  in the end is not used in the project because i opted to store the full package  
+ * @fn storeFLAC was more a test for how to store data  in the end is not used in the project because i opted to store the full message as a float list and the index all in a package  package  
  * @param data An initiallized (with initAudioData()) AudioData structure alredy filled 
  * @param fileName The name of the file in which the recording will be stored
  * @return Success value
@@ -165,9 +165,11 @@ AudioDataf recordP(void)
             
             //wait for a key form tty
             sem_wait(sem1); //lock the semaphore so the child know that has to stop working
-            if (sem_close(sem1) < 0)
+            if (sem_close(sem1) < 0){
             perror("sem_close(3) failed");
-            exit(0);}
+            exit(EXIT_FAILURE);}
+            exit(0);
+            }
 
         default:
              while(!sem_trywait(sem1))// check if the binary semaphore is locked (so if the parent as locked you stop the registration) then lockit
@@ -214,5 +216,5 @@ done:
     perror("err");
 
 
-    return toplayback;
+return toplayback;
 }

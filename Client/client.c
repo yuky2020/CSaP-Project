@@ -262,8 +262,9 @@ do{  if (write(s,&type,sizeof(type))<0) {
     for(i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
       t=0;
       if(k==1||k==3)if(strcmp(messageList[i].from,toserchu)==0)t=1;//check fot the user 
-      if(k==2||k==3){ if(datecmp(messageList[i].timestamp,toserchd[0])==1&&datecmp(toserchd[1],messageList[i]))t=1;//check for the date 
-		                   else t=0;
+      if(k==2||k==3){ if(datecmp(messageList[i].timestamp,toserchd[0])==1&&datecmp(toserchd[1],messageList[i].timestamp)) 
+                          t=1;//check for the date 
+		                    else t=0;
                         } 
      if(t==1)printf("%d)Message from %s sended %s\n",(inboxn-i),messageList[i].from,messageList[i].timestamp);
   
