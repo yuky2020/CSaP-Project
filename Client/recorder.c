@@ -17,7 +17,7 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#define SEM_NAME "/semaphore_12345678910"
+#define SEM_NAME "/semaphore_abc"
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
 #define INITIAL_VALUE 1
 #define FRAMES_PER_BUFFER 1024

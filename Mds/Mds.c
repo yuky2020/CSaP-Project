@@ -9,8 +9,8 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#define SEM_NAME "/semaphoressssss"//is the prefix in the name of every semaphore used for VDR
-#define SEM_NAMEUL "/semaphoressssssul"//is the name of the semaphore for the userlist
+#define SEM_NAME "/semaphorezzz"//is the prefix in the name of every semaphore used for VDR
+#define SEM_NAMEUL "/semaphorezzzul"//is the name of the semaphore for the userlist
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)// "Permessi del semaforo"
 #define INITIAL_VALUE 1//intial value of the semaphore 
 #define VDRN 1 //Number of vdr used
@@ -38,7 +38,7 @@ int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
 	 exit(1);}
    sleep(1);//give time to recive data and send the response from the i-th vdr process
    //read the result from actual vdr
-	    if (read(vdrs[vdrIndex],&inboxvdr,sizeof(inboxvdr))<0) {
+	    if (read(vdrs[vdrIndex],&inboxvdr,sizeof(int))<0) {
 	    perror("read");
 	    exit(1);}
 
@@ -58,6 +58,7 @@ int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
 int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
    int    retvdr=0;//the return value from the vdr set to default to 0; 
    int    vdrtype=9; //the type to send to the vdr in order to get back if the user is or not in it;
+   int    len=0; //for cech dimension of arrays of char (string)
    for(int i=0;i<VDRN;i++){
 	    sem_t *sem;
 	    char saddress[(MAXLIMIT+10)] = {'\0'};//the adress of the semphore for the i vdr 
@@ -69,11 +70,15 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
             }
             sem_wait(sem);//lock the semaphore so you can write to the VDR socket
 	    //write vdrtype to the socket    
-	    if (write(vdrs[i],&vdrtype,sizeof(vdrtype))<0) {
+	    if (write(vdrs[i],&vdrtype,sizeof(int))<0) {
 		  perror("write");
 		  exit(1);}
 	    //write username to the socket
-	    if (write(vdrs[i],&username,sizeof(username[MAXLIMIT]))<0) {
+       len=strlen(username);
+       if (write(vdrs[i],&len,sizeof(int))<0) {
+		  perror("write");
+		  exit(1);}
+	    if (write(vdrs[i],username,len+1)<0) {
 		  perror("write");
 		  exit(1);}
 	    //sleep(100);//give time to recive data and send the response from the i-th vdr process,not useful removed 
@@ -207,6 +212,7 @@ int delatefromvdr(char username[MAXLIMIT],int vdrs[VDRN],int vdrIndex, int c){
 
 }
 int putalluser(int c ){
+   int   len=0;//len for  string 
    FILE 	*fp;
    sem_t 	*sem;//semaphore for lock the userlist file  while used
    char 	(*tmp)[MAXLIMIT];
@@ -245,7 +251,14 @@ int putalluser(int c ){
 	return 1;}
    
    for(int j=0;j<i;j++){
-       if (write(c,&tmp[i],sizeof(char[MAXLIMIT]))<0) {
+      len=strlen(tmp[i]);
+      //write the len as described in 
+      if(write(c,&len,sizeof(int))<0){
+         perror("write");
+         return 1;
+      }
+
+       if (write(c,tmp[i],strlen(tmp[i])+1)<0) {
 	 perror("write");
 	 return 1;}
 
@@ -517,7 +530,7 @@ int registeru(userData afantasticuser){
     {
       perror("file open");
       return 0;
-      exit(1);             
+                   
     }
 
   
@@ -573,18 +586,40 @@ void dowork(int c,int vdrs[VDRN])
     userData afantasticuser;
     int type,result,tentatives=0;
     int vdrIndex;//the index of vdr to use
+    int len;//used to take care of the lens of the string 
     //client can try to acess five times then for security reason connection is abortefor security reason connection is abortedd
     //read from Stream Socket
     do{
-    if (read (c, &afantasticuser, sizeof (userData)) < 0) {
-	perror ("read");
-	exit (1);
-    }
+    //read the type of the request    
+    if (read (c, &afantasticuser.type, sizeof (int)) < 0) {
+	   perror ("read");
+	   exit (1);
+      }
+    //get the len of the username   
+    if (read (c, &len, sizeof (int)) < 0) {
+	   perror ("read");
+	   exit (1);
+      } 
+    //get the username   
+    if (read (c, &afantasticuser.username,len+1) < 0) {
+	   perror ("read");
+	   exit (1);
+      }   
+     //get the len of password 
+    if (read (c, &len, sizeof (int)) < 0) {
+	   perror ("read");
+	   exit (1);
+      } 
+    //get the password the +1 is for  the endian value   
+    if (read (c, &afantasticuser.password,len+1) < 0) {
+	   perror ("read");
+	   exit (1);
+      }   
+
     
    if(afantasticuser.type==1)result=autenticate(afantasticuser);
-   else{if (afantasticuser.type==2)result=registeru(afantasticuser);
-	      else perror("Malformetted data from client(security allert: attack with a row socket is plausible )");
-         exit(1); }
+   else{if(afantasticuser.type==2)result=registeru(afantasticuser);else{ perror("Malformetted data from client(security allert: attack with a row socket is plausible )");
+         exit(1);} }
 
     //write result to the stream
     if (write (c,&result, sizeof (int)) < 0) {
@@ -606,10 +641,10 @@ void dowork(int c,int vdrs[VDRN])
     vdrIndex=getvdrIndex(afantasticuser.username,vdrs);
 
     do{
-        if (read (c, &type, sizeof (int)) < 0) {
-	perror ("read");
-	exit (1);
-	 }
+        if (read(c, &type, sizeof(int)) < 0) {
+	         perror ("read");
+	         exit (1);
+	         }
 	 switch (type) {
 	 	case 7: //if the type is 7 client want the number of inbox message  ;
 		   {int inbox=0;

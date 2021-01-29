@@ -8,6 +8,112 @@
 #include <string.h>
 #include <time.h>
 #include"util.h"
+//function to select a user form addressbook or from all user @param s:socket to MDS,@param *tmp string  to save the user to;
+int  selectuserto(int s,char *tmp){
+  int len; //lenght of evry char that is sended;
+  int j,i=0;//j is the nuber of user actualy in server
+  printf("1)search from adressBook\n");
+  printf("2)search from all user\n");
+  scanf("%d",&i);
+  printf("select wanted user by number");
+  if(i==1){
+      FILE *fp;//file where to place adressBook;
+      char usernameList[ADDRESSBOOKLIMIT][MAXLIMIT];//list from adressBook
+
+
+      if ((fp = fopen("AdressBook", "rb")) == NULL) {
+	    perror(" opening file");
+	    // Program exits if file pointer returns NULL.
+	    return 1;
+	    }
+      j=0;
+
+      while (!feof(fp)){// while not end of file
+	    fread(usernameList[j],sizeof(char[MAXLIMIT]),1,fp);
+	    printf("%d,%s\n",(j+1),usernameList[j]);
+	    j++;
+		}
+      j--;//becouse you encrement before re enter
+      fclose(fp);//close the file for now
+      int k;
+      do{scanf("%d",&k);
+	 if(k>j)printf("this number is still not presnt");
+	}while(k>j);
+      strcpy(tmp,usernameList[(k+1)]);
+    //  free(usernameList);//fre the user list not useful anymore;
+      return 1;
+
+      }
+
+  if(i==2){//retrive all user and selsct from the list 
+    int type=9;//the type of call for this function
+    if (write(s,&type,sizeof(int))<0) {
+	  perror("write");
+	  return 1;}
+    sleep(1);
+    printf("Sto per ricevere dei dati \n");	
+    if (read(s,&j,sizeof(int))<0) {
+	      perror("write");
+	      return 1;}
+    //at the lest there is one user 
+    if(j<1){perror("problem with MDS"); return 1;}
+      char usernamesist[j][MAXLIMIT];
+      sleep(1);
+      //char usernameList[MAXLIMIT][MAXLIMIT]; here for testing pourpose
+    //read all the username and print it 
+    for(int k=0;k<j;j++){
+      //read the lenght of the next string; 
+      if(read(s,&len,sizeof(int))<0){perror("read"); return 1; }
+      //read from socket and print for the user
+      if (read(s,usernamesist[k],len+1)<0) {
+	        perror("read");
+	        return 1;}
+      printf("%d  %s\n",(k+1),usernamesist[k]);
+      sleep(1);
+      
+      }
+    if (read(s,&type,sizeof(int))<0) {
+	  perror("read");
+	  return 1;}
+    //type is used to store the end of trasmission from MDS;	
+    if(type!=1) {
+	  perror("write");
+	  return 1;}
+    type=5;//end of trasmission for MDS
+    if (write(s,&type,sizeof(type))<0) {
+	  perror("write");
+	  return 1;}
+	
+
+    //actual_user enter the user wanted;
+    do{ scanf("%d",&i);
+      if (i>j)printf("This user is still not in list try again \n");
+      }while(i>j);
+
+    strcpy(tmp,usernamesist[i]);
+    //free(usernameList);//fre the user list not useful anymore;
+   
+    }
+
+
+ return 0;
+}
+
+//return number of massage stored actualy in Inbox 
+int checkinbox(int s){
+  int ret,type=7; //7 is the type for this call
+    //write type in the socket
+    if (write(s,&type,sizeof(int))<0) {
+	    perror("write");
+	    exit(1);
+      }
+    //then the socket should return the number of massage
+    if (read(s,&ret,sizeof(int))<0) {
+	    perror("read");
+	    exit(1); }
+     return ret;
+}
+
 //write in  the socket type=5,so Mds whill close child process;
 int disconnect(int s){
   int type=5;
@@ -97,9 +203,9 @@ do{  if (write(s,&type,sizeof(type))<0) {
     scanf("%d",&k);
     if(k==1||k==3) selectuserto(s,toserchu); 
     if(k==2||k==3){printf("write the start date to search in format:es Sat Mar 25 06:10:10 1989  \n");
-		   scanf("%s",&toserchd[0]);
+		   scanf("%s",toserchd[0]);
 		   printf("write the final date to search \n");
-		   scanf("%s",&toserchd[1]);}
+		   scanf("%s",toserchd[1]);}
 
 
     for(int i=0;i<inboxn;i++){
@@ -156,8 +262,9 @@ do{  if (write(s,&type,sizeof(type))<0) {
     for(i=(inboxn-1);i>=0;i--){//print like that for have the last message frist
       t=0;
       if(k==1||k==3)if(strcmp(messageList[i].from,toserchu)==0)t=1;//check fot the user 
-      if(k==2||k==3){if(datecmp(messageList[i].timestamp,toserchd[0])==1&&datecmp(toserchd[1],messageList[i]))t=1;//check for the date 
-		      else t=0;} 
+      if(k==2||k==3){ if(datecmp(messageList[i].timestamp,toserchd[0])==1&&datecmp(toserchd[1],messageList[i]))t=1;//check for the date 
+		                   else t=0;
+                        } 
      if(t==1)printf("%d)Message from %s sended %s\n",(inboxn-i),messageList[i].from,messageList[i].timestamp);
   
       }
@@ -178,12 +285,12 @@ do{  if (write(s,&type,sizeof(type))<0) {
      if(i==2){selectuserto(s,messageList[i].to); //inoltrate to a new user the message;
 	      strcpy(messageList[i].from,user);
              if(sendMessage(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
-	      else{printf("MESSAGE SENT SUCESSFULLY\n");
-	      i=4;} }
+	            else{printf("MESSAGE SENT SUCESSFULLY\n");
+	              i=4;} }
     if(i==3){if(delateMessage(messageList[i],s))printf("MESSAGE NOT DELATED NETWORK PROBLEM TRY AGAIN\n");
-	      else{printf("MESSAGE DELATED SUCESSFULLY\n");
-		    i=4;//go back to inbox after delation}
-	      }	      
+	            else{printf("MESSAGE DELATED SUCESSFULLY\n");
+		              i=4;//go back to inbox after delation}
+	                }	      
 		  
 
 	      }
@@ -281,90 +388,6 @@ int addusertoadressbook(int s){
 
  
 }
-//function to select a user form addressbook or from all user @param s:socket to MDS,@param *tmp string  to save the user to;
-int  selectuserto(int s,char *tmp){
-  int j,i=0;//j is the nuber of user actualy in server
-  printf("1)search from adressBook\n");
-  printf("2)search from all user\n");
-  scanf("%d",&i);
-  printf("select wanted user by number");
-  if(i==1){
-      FILE *fp;//file where to place adressBook;
-      char usernameList[ADDRESSBOOKLIMIT][MAXLIMIT];//list from adressBook
-
-
-      if ((fp = fopen("AdressBook", "rb")) == NULL) {
-	    perror(" opening file");
-	    // Program exits if file pointer returns NULL.
-	    return 1;
-	    }
-      j=0;
-
-      while (!feof(fp)){// while not end of file
-	    fread(usernameList[j],sizeof(char[MAXLIMIT]),1,fp);
-	    printf("%d,%s\n",(j+1),usernameList[j]);
-	    j++;
-		}
-      j--;//becouse you encrement before re enter
-      fclose(fp);//close the file for now
-      int k;
-      do{scanf("%d",&k);
-	 if(k>j)printf("this number is still not presnt");
-	}while(k>j);
-      strcpy(tmp,usernameList[(k+1)]);
-    //  free(usernameList);//fre the user list not useful anymore;
-      return 1;
-
-      }
-
-  if(i==2){//retrive all user and selsct from the list 
-    int type=9;//the type of call for this function
-    if (write(s,&type,sizeof(type))<0) {
-	perror("write");
-	return 1;}
-    	
-    if (read(s,&j,sizeof(int))<0) {
-	perror("write");
-	return 1;}
-    //at the lest there is one user 
-    if(j<1){perror("problem with MDS"); return 1;}
-      char usernameList[j][MAXLIMIT];
-      //char usernameList[MAXLIMIT][MAXLIMIT]; here for testing pourpose
-    //read all username and print it 
-    for(int k=0;k<j;j++){
-      //read from socket and print for the user
-      if (read(s,&usernameList[k],sizeof(char[MAXLIMIT]))<0) {
-	  perror("write");
-	  return 1;}
-      printf("%d  %s\n",(k+1),usernameList[k]);
-      
-      }
-    if (read(s,&type,sizeof(int))<0) {
-	  perror("read");
-	  return 1;}
-    //type is used to store the end of trasmission from MDS;	
-    if(type!=1) {
-	  perror("write");
-	  return 1;}
-    type=5;//end of trasmission for MDS
-    if (write(s,&type,sizeof(type))<0) {
-	  perror("write");
-	  return 1;}
-	
-
-    //actual_user enter the user wanted;
-    do{ scanf("%d",&i);
-      if (i>j)printf("This user is still not in list try again \n");
-      }while(i>j);
-
-    strcpy(tmp,usernameList[i]);
-    //free(usernameList);//fre the user list not useful anymore;
-    return 0;
-    }
-
-
-
-}
 
 //list all mesage sended to this user contact the MDS to get data, is an interactive function 
 int listallmessage(int s,char username[MAXLIMIT]){
@@ -457,12 +480,12 @@ do{  if (write(s,&type,sizeof(type))<0) {
      if(i==2){selectuserto(s,messageList[i].to); //inoltrate to a new user the message;
 	      strcpy(messageList[i].from,username);
              if(sendMessage(messageList[(inboxn-i)],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
-	      else{printf("MESSAGE SENT SUCESSFULLY\n");
-	      i=4;} }
+	            else{printf("MESSAGE SENT SUCESSFULLY\n");
+	            i=4;} }
     if(i==3){if(delateMessage(messageList[(inboxn-i)],s))printf("MESSAGE NOT DELATED NETWORK PROBLEM TRY AGAIN\n");
-	      else{printf("MESSAGE DELATED SUCESSFULLY\n");
-		    i=4;//go back to inbox after delation}
-	      }	      
+	            else{printf("MESSAGE DELATED SUCESSFULLY\n");
+		          i=4;//go back to inbox after delation}
+	            }	      
 		  
 
 	      }
@@ -482,16 +505,40 @@ return 0;//return 0 in case of success;
 }
 //send login data to socket return 1 for auth compleate 0 on failed
 int login(userData u, int t,int  s ){
-
+  int len;
   u.type=t; 
   //wirte in the socket data for login or register
-      if (write(s,&u,sizeof(u))<0) {
-	perror("write");
-	exit(1);
-    }
+  if (write(s,&t,sizeof(int))<0) {
+	    perror("write");
+	    exit(1);
+      }
+  //read the len of the username     
+  len=strlen(u.username);
+  //send  to the socket the len 
+  if (write(s,&len,sizeof(int))<0) {
+	    perror("write");
+	    exit(1);
+      }
+  //send the username to the socket ad one for the endian 
+  if (write(s,&u.username,len+1)<0) {
+	    perror("write");
+	    exit(1);
+      }
+  //read the len of the password     
+  len=strlen(u.password);
+  //send  to the socket the len 
+  if (write(s,&len,sizeof(int))<0) {
+	    perror("write");
+	    exit(1);
+      }
+  //send the password to the socket ad one for the endian 
+  if (write(s,&u.password,len+1)<0) {
+	    perror("write");
+	    exit(1);
+      }
 
-    // Read  from socket 1 for login or register done 0 for not 
-    if (read(s,&t,sizeof(t))<0) {
+  // Read  from socket 1 for login or register done 0 for not 
+  if (read(s,&t,sizeof(int))<0) {
 	perror("read");
 	exit(1); }
 
@@ -499,20 +546,6 @@ int login(userData u, int t,int  s ){
 
   }
 
-//return number of massage stored actualy in Inbox 
-int checkinbox(int s){
-  int ret,type=7; //7 is the type for this call
-    //write type in the socket
-    if (write(s,&type,sizeof(type))<0) {
-	perror("write");
-	exit(1);
-    }
-    //then the socket should return the number of massage
-    if (read(s,&ret,sizeof(ret))<0) {
-	perror("read");
-	exit(1); }
-  return ret;
-}
 
 int main(int argc, char *argv[])
 {
@@ -586,8 +619,8 @@ fclose(config);
 
 
 if (argc==3){t=1;
-             *afantastic.username=argv[1];
-             *afantastic.password=argv[2];
+             *afantastic.username=*argv[1];
+             *afantastic.password=*argv[2];
             }
 
 do{ if(t==0){printf("1)Login\n");
@@ -616,18 +649,18 @@ do{
     case 1:{
 	   listallmessage(s,afantastic.username);
 	 }
-    case 2 ://select a user and then send a message user can be select eihter by address book or by write is name ;
+    case 2 ://select a user and then send a message user can be select eihter by address book or by writeing is name ;
 	 
-      {PackageData tosend;
-	AudioDataf messagetosend;
-	messagetosend = recordP();
-	tosend.size=sizeof(tosend.message);
+      { PackageData tosend;
+	      AudioDataf messagetosend;
+	      tosend.size=sizeof(tosend.message);
         strcpy(tosend.from,afantastic.username);
-	if(selectuserto(s,tosend.to))perror("Problem with mds");//select the user to send the data to pass the socket to the 
-	time_t ltime; /* calendar time */
+      	if(selectuserto(s,tosend.to))perror("Problem with mds");//select the user to send the data to pass the socket to the 
+      	time_t ltime; /* calendar time */
         ltime=time(NULL); /* get current cal time */
-	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
-	tosend.message=messagetosend;
+      	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
+  messagetosend = recordP();
+  tosend.message=messagetosend;
 	tosend.hash=hashCode(tosend);
         do{ printf("1) send the message\n");
 	    printf("2) listen the message before send it\n");

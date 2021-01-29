@@ -483,10 +483,16 @@ do{
     //type 9 is for check if the user was ever register in this vdr;
     if(type==9){
 	char user[MAXLIMIT];
+        int len;
 	//read the username to search inbox;
-        if (read(s,&user,sizeof(user))<0) {
+        if (read(s,&len,sizeof(len))<0) {
 	perror("read");
 	exit(1);}
+        if(read(s,user,len+1)<0){
+                perror("read");
+                exit(1);
+        }
+        printf("Im chek if %s is here \n",user );
         //socret= return 0 if the file with ninbox dosen't esist 1 else ;
 	socret=checkuser(user);
         //return socret to the socket
