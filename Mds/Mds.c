@@ -220,9 +220,8 @@ int delatefromvdr(char username[MAXLIMIT],int vdrs[VDRN],int vdrIndex, int c){
 int putalluser(int c ){
    int   len=0;//len for  string 
    FILE 	*fp;
+   int n=0;//to save the number of actual user registered
    sem_t 	*sem;//semaphore for lock the userlist file  while used
-   char 	(*tmp)[MAXLIMIT];
-   tmp=malloc(1*sizeof(char[MAXLIMIT]));//to store a  username files;
    sem= sem_open(SEM_NAMEUL, O_RDWR);//open the semaphore 
    if (sem == SEM_FAILED) {
       perror("sem_open failed");
@@ -231,18 +230,28 @@ int putalluser(int c ){
    //lock the semaphore 
    //this part need a semaphore because this operation is plausible done by more client concurently 
    sem_wait(sem);
+   //read the number of user actualy registered
+    if ((fp = fopen("usersListN", "rb")))
+    {   fread(&n,sizeof(int),1,fp);
+        fclose(fp);
+        
+    }else {
+    fclose(fp);
+    return 0;
+    }
    //open all user list
    if (!(fp = fopen("usersList", "rb")))
     {
         fclose(fp);
         return 1;
     }
+   char  tmp[n][MAXLIMIT];//to store a  username files; 
    int i=0;
-   while(!feof(fp)){
+   while(!feof(fp)&&i<n){
    //write the new user in the user list   
    fread(tmp[i],sizeof(char[MAXLIMIT]),1,fp); 
    i++;
-   tmp=realloc(tmp,(i*sizeof(char[MAXLIMIT])));
+   
 
    }
    i--;//becouse we increment before check;
@@ -257,14 +266,14 @@ int putalluser(int c ){
 	return 1;}
    
    for(int j=0;j<i;j++){
-      len=strlen(tmp[i]);
+      len=strlen(tmp[j]);
       //write the len as described in 
       if(write(c,&len,sizeof(int))<0){
          perror("write");
          return 1;
       }
 
-       if (write(c,tmp[i],strlen(tmp[i])+1)<0) {
+       if (write(c,tmp[j],strlen(tmp[j])+1)<0) {
 	 perror("write");
 	 return 1;}
 
@@ -513,6 +522,7 @@ int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c)
 //registration of a user 
 int registeru(userData afantasticuser){
    FILE *fp;
+   int n=0;//number of user in the user list 
    sem_t 	*sem;//semaphore for lock the userlist file  while used
    sem= sem_open(SEM_NAMEUL, O_RDWR);//open the semaphore 
    if (sem == SEM_FAILED) {
@@ -545,6 +555,23 @@ int registeru(userData afantasticuser){
    //lock the semaphore 
    //this part need a semaphore because this operation is plausible done by more client concurently 
    sem_wait(sem);
+   //open all user list number and read the nuber of user registrated if there isnt go over
+   if ((fp = fopen("usersListN", "rb")))
+    {   fread(&n,sizeof(int),1,fp);
+        fclose(fp);
+       
+    }
+    //open now in write mode 
+    if (!(fp = fopen("usersListN", "wb")))
+    {
+        fclose(fp);
+        return 0;
+    }
+    n++;
+    fwrite(&n,sizeof(int),1,fp);
+
+
+
    //open all user list
    if (!(fp = fopen("usersList", "ab")))
     {
@@ -718,7 +745,7 @@ int main()
 {
       
     sem_t *semvdr[VDRN];//semphore to prevent two client from write to the same vdr using poisix semphore because more easy to menage
-    sem_t *semusl; //semaphore to prevent two client from write to userlist
+    sem_t *semusl; //semaphore to prevent two client from write to userlist and userlistn
     int s,c,len,vdr,vdrs[VDRN];//vdr is for the master socket of VDRS while on aceptance you have filled the array vdrs[VDRN],s is for the master socket for client while on aceptance you have the socket c 
     struct sockaddr_in saddr;
     int ops[3];

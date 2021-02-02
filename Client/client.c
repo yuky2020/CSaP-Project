@@ -45,7 +45,7 @@ int  selectuserto(int s,char *tmp){
 
       }
 
-  if(i==2){//retrive all user and selsct from the list 
+  else if(i==2){//retrive all user and selsct from the list 
     int type=9;//the type of call for this function
     if (write(s,&type,sizeof(int))<0) {
 	  perror("write");
