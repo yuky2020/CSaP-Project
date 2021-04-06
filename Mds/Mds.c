@@ -656,8 +656,8 @@ void dowork(int c,int vdrs[VDRN])
 
     //write result to the stream
     if (write (c,&result, sizeof (int)) < 0) {
-	perror ("write");
-	exit (1);
+	   perror ("write");
+	   exit (1);
 
 	 }
     tentatives++;

@@ -46,32 +46,33 @@ int  selectuserto(int s,char *tmp){
       }
 
   else if(i==2){//retrive all user and selsct from the list 
-    int type=9;//the type of call for this function
-    if (write(s,&type,sizeof(int))<0) {
-	  perror("write");
-	  return 1;}
-    sleep(1);
-    printf("Sto per ricevere dei dati \n");	
-    if (read(s,&j,sizeof(int))<0) {
-	      perror("write");
-	      return 1;}
-    //at the lest there is one user 
-    if(j<1){perror("problem with MDS"); return 1;}
+      int type=9;//the type of call for this function
+      if (write(s,&type,sizeof(int))<0) {
+	    perror("write");
+	    return 1;}
+      sleep(1);
+      printf("Sto per ricevere dei dati \n");	
+      if (read(s,&j,sizeof(int))<0) {
+	        perror("write");
+	        return 1;}
+      //at the lest there is one user
+      printf("%d",j); 
+      if(j<1){perror("problem with MDS"); return 1;}
       char usernamesist[j][MAXLIMIT];
       sleep(1);
       //char usernameList[MAXLIMIT][MAXLIMIT]; here for testing pourpose
-    //read all the username and print it 
-    for(int k=0;k<j;j++){
-      //read the lenght of the next string; 
-      if(read(s,&len,sizeof(int))<0){perror("read"); return 1; }
-      //read from socket and print for the user
-      if (read(s,usernamesist[k],len+1)<0) {
+      //read all the username and print it 
+      for(int k=0;k<j;j++){
+        //read the lenght of the next string; 
+        if(read(s,&len,sizeof(int))<0){perror("read"); return 1; }
+        //read from socket and print for the user
+        if (read(s,usernamesist[k],len+1)<0) {
 	        perror("read");
 	        return 1;}
-      printf("%d  %s\n",(k+1),usernamesist[k]);
-      sleep(1);
+       printf("%d  %s\n",(k+1),usernamesist[k]);
+        sleep(1);
       
-      }
+        }
     if (read(s,&type,sizeof(int))<0) {
 	  perror("read");
 	  return 1;}
@@ -547,6 +548,50 @@ int login(userData u, int t,int  s ){
 
   }
 
+  // send a new message to a user in an interactive way 
+  int sendNew( char username[20], int s ){
+        int i;
+        PackageData tosend;
+	      AudioDataf messagetosend;
+	      tosend.size=sizeof(tosend.message);
+        strcpy(tosend.from,username);
+      	if(selectuserto(s,tosend.to)){//select the uset to send the data to
+            perror("Problem with mds"); 
+            return 1;}
+      	time_t ltime; /* calendar time */
+        ltime=time(NULL); /* get current cal time */
+      	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
+        messagetosend = recordP();
+        tosend.message=messagetosend;
+	      tosend.hash=hashCode(tosend);
+        do{ printf("1) send the message\n");
+	          printf("2) listen the message before send it\n");
+	          printf("3) to return to the main menu\n");
+	          printf("4)change the destinatary user actualy is: %s \n",tosend.to);
+            printf("5)go back to main menu ");
+	          scanf("%d",&i);
+	          if(i==1){
+	            printf("sending your message \n");
+	          if(sendMessage(tosend,s)){
+              printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
+              return 1;}
+	          else{printf("MESSAGE SENT SUCESSFULLY\n");
+                 printf("1)inoltrate this massage to another user");
+		             printf("2)go back to the main menu\n");
+		             scanf("%d",&i);
+		             i=i+3;//smart move in this way if you have pressed 2 you go back and if you press 1 you inoltrate the message
+                }
+            }
+	          if(i==2)playback(tosend.message);//playback the audio registered
+	          if (i==4){selectuserto(s,tosend.to);
+		         tosend.hash=hashCode(tosend);
+	           } 
+	           }while(i<5);
+
+         return 1;
+
+  }     
+
 
 int main(int argc, char *argv[])
 {
@@ -639,7 +684,7 @@ do{ if(t==0){printf("1)Login\n");
 printf("Welcome Back %s \n",afantastic.username );
 int i;
 do{
-  printf("%d inbox messages for you \n",checkinbox(s));
+  //printf("%d inbox messages for you \n",checkinbox(s)); //removed for testing reason could couse problem
   printf("1) show the new messages \n");
   printf("2) send a new message \n");
   printf("3) add new contact in the address book \n ");
@@ -652,37 +697,9 @@ do{
 	 }
     case 2 ://select a user and then send a message user can be select eihter by address book or by writeing is name ;
 	 
-      { PackageData tosend;
-	      AudioDataf messagetosend;
-	      tosend.size=sizeof(tosend.message);
-        strcpy(tosend.from,afantastic.username);
-      	if(selectuserto(s,tosend.to))perror("Problem with mds");//select the user to send the data to pass the socket to the 
-      	time_t ltime; /* calendar time */
-        ltime=time(NULL); /* get current cal time */
-      	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
-  messagetosend = recordP();
-  tosend.message=messagetosend;
-	tosend.hash=hashCode(tosend);
-        do{ printf("1) send the message\n");
-	    printf("2) listen the message before send it\n");
-	    printf("3) to return to the main menu\n");
-	    printf("4)change the destinatary user actualy is: %s \n",tosend.to);
-	    scanf("%d",&i);
-	    if(i==1){
-	      printf("sending your message \n");
-	      if(sendMessage(tosend,s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
-	      else{printf("MESSAGE SENT SUCESSFULLY\n");
-		 printf("1)go back to the main menu\n");
-		 printf("2)inoltrate this massage to another user");
-		 scanf("%d",&i);
-		 i=i+3;//smart move in this way if you have pressed 1 you go back and if you press 2 you inoltrate the message
-		  }
-	      }
-	    if(i==2)playback(tosend.message);//playback the audio registered
-	    if (i==4){selectuserto(s,tosend.to);
-		      tosend.hash=hashCode(tosend);
-	      }
-	  }while(i!=4);
+      {if(sendNew(afantastic.username,s))printf("message sent");
+       else perror("network proble with MDS");
+        
       }//close case 2;
     case 3:{
 	     if(addusertoadressbook(s)){perror("Error,Try Again");}
