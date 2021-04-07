@@ -7,121 +7,7 @@
 #include <netdb.h>
 #include <string.h>
 #include "util.h"
-//delate a message alredy store for a user
-int delateMessage(int s){
- PackageData todel;//package to delate
- int 	     trov=0;//variabile to set if i have found and delate the file
-    todel.type=6;
-    //read the user from the data is sended 
-    if (read(s,&todel.from,sizeof(todel.from))<0) {
-	perror("read");
-	return 1;}
-    //read the user to the message is sended
-    if (read(s,&todel.to,sizeof(todel.to))<0) {
-	perror("read");
-	return 1;}
-    //read the size of audio data
-    if (read(s,&todel.size,sizeof(todel.size))<0) {
-	perror("read");
-	return 1;}
-    //read the audioData 
-    if (read(s,&todel.message,todel.size)<0) {
-	perror("read");
-	return 1;}
 
-    //read the hash
-    if (read(s,&todel.hash,sizeof(todel.hash))<0) {
-	perror("read");
-	return 1;}
-    //read timestamp
-    if (read(s,&todel.timestamp,sizeof(todel.timestamp))<0) {
-	perror("read");
-	return 1;}
-    //check if the hash is still valid 
-    if(todel.hash!=hashCode(todel)){
-	perror("hash is different");
-	return 1;}
-
-   //inizializethe read of all the package for this user;
-   //read number of message for this user 
-   int j= getinbox(todel.to);
-   int i=0;
-   FILE *fp;
-   PackageData tmp[i];//package data where to store data while reading and before check
-   // save the address of the file the name is the usename of the reciver 
-   char address[(MAXLIMIT+11)] = {'\0'};
-   sprintf(address, "users/%sData", todel.to);
-    //open in read mode    
-    fp = fopen(address,"rb");
-    if(fp == NULL){perror("error open");
-		    return 1;}
-    //Start to reading and sending all PackageData destinated to  user ones to ones;also deserialize it 
-    for(i;i<j;i++){
-        //read the type from file 
-        if (fread(&tmp[i].type,sizeof(tmp[i].type),1,fp)<0) { 
-	perror("read");
-	return 0;
-	}
-        //read the from user from file
-        if (fread(&tmp[i].from,sizeof(tmp[i].from),1,fp)<0) { 
-	perror("read");
-	return 0;
-	}
-	//read the to user from file 
-        if (fread(&tmp[i].to,sizeof(tmp[i].to),1,fp)<0) { 
-	perror("read");
-	return 0;
-	}
-	//read the size of AudioDataf
-        if (fread(&tmp[i].size,sizeof(tmp[i].size),1,fp)<0) { 
-	perror("read");
-	return 0;
-	}
-	//read audioDataf
-        if (fread(&tmp[i].message,tmp[i].size,1,fp)<0) { 
-	perror("read");
-	return 0;
-	}
-	//read the hash
-        if (fread(&tmp[i].hash,sizeof(tmp[i].hash),1,fp)<0) { 
-	perror("read");
-	return 0;
-	}
-	//read the timestamp
-        if (fread(&tmp[i].timestamp,sizeof(tmp[i].timestamp),1,fp)<0) { 
-	perror("read");
-	return 0;
-	}
-	//check if the hash is still valid
-        if(tmp[i].hash!=hashCode(tmp[i])){
-	perror("hash is different");
-	return 0;}
-      }
-    //now i have to all the data stored and can delate the file_data
-   fclose(fp);
-   //destroy the file 
-   fclose(fopen(address, "wb"));
-   i=0;
-   for(i;i<j;i++){
-      if(strcmp(todel.timestamp,tmp[i].timestamp)==0&&todel.hash==tmp[i].hash)trov=1;
-      else{ //store the data
-	 if(storetofile(todel)){
-	    perror("store");
-	    return 1;}
-
-
-      }
-   }
-   //we have done with the file 
-    fclose(fp);
-    //at this point we have recreated the file without the todel PackageData
-    //check if it was in the old data 
-    if(trov==0)return 1;
-    //if evrything is done return 0
-    return 0;
-
-
-}
 //check if a user has ever logged here
 int checkuser(char user[MAXLIMIT]){
    FILE *fp;
@@ -369,7 +255,123 @@ int storeMessage(int s){
     //then return 0 if everything goes fine 
     return 0;
 }
-void main(int argc, char *argv[])
+
+//delate a message alredy store for a user
+int delateMessage(int s){
+ PackageData todel;//package to delate
+ int 	     trov=0;//variabile to set if i have found and delate the file
+    todel.type=6;
+    //read the user from the data is sended 
+    if (read(s,&todel.from,sizeof(todel.from))<0) {
+	perror("read");
+	return 1;}
+    //read the user to the message is sended
+    if (read(s,&todel.to,sizeof(todel.to))<0) {
+	perror("read");
+	return 1;}
+    //read the size of audio data
+    if (read(s,&todel.size,sizeof(todel.size))<0) {
+	perror("read");
+	return 1;}
+    //read the audioData 
+    if (read(s,&todel.message,todel.size)<0) {
+	perror("read");
+	return 1;}
+
+    //read the hash
+    if (read(s,&todel.hash,sizeof(todel.hash))<0) {
+	perror("read");
+	return 1;}
+    //read timestamp
+    if (read(s,&todel.timestamp,sizeof(todel.timestamp))<0) {
+	perror("read");
+	return 1;}
+    //check if the hash is still valid 
+    if(todel.hash!=hashCode(todel)){
+	perror("hash is different");
+	return 1;}
+
+   //inizializethe read of all the package for this user;
+   //read number of message for this user 
+   int j= getinbox(todel.to);
+   int i=0;
+   FILE *fp;
+   PackageData tmp[i];//package data where to store data while reading and before check
+   // save the address of the file the name is the usename of the reciver 
+   char address[(MAXLIMIT+11)] = {'\0'};
+   sprintf(address, "users/%sData", todel.to);
+    //open in read mode    
+    fp = fopen(address,"rb");
+    if(fp == NULL){perror("error open");
+		    return 1;}
+    //Start to reading and sending all PackageData destinated to  user ones to ones;also deserialize it 
+    for(i;i<j;i++){
+        //read the type from file 
+        if (fread(&tmp[i].type,sizeof(tmp[i].type),1,fp)<0) { 
+	perror("read");
+	return 0;
+	}
+        //read the from user from file
+        if (fread(&tmp[i].from,sizeof(tmp[i].from),1,fp)<0) { 
+	perror("read");
+	return 0;
+	}
+	//read the to user from file 
+        if (fread(&tmp[i].to,sizeof(tmp[i].to),1,fp)<0) { 
+	perror("read");
+	return 0;
+	}
+	//read the size of AudioDataf
+        if (fread(&tmp[i].size,sizeof(tmp[i].size),1,fp)<0) { 
+	perror("read");
+	return 0;
+	}
+	//read audioDataf
+        if (fread(&tmp[i].message,tmp[i].size,1,fp)<0) { 
+	perror("read");
+	return 0;
+	}
+	//read the hash
+        if (fread(&tmp[i].hash,sizeof(tmp[i].hash),1,fp)<0) { 
+	perror("read");
+	return 0;
+	}
+	//read the timestamp
+        if (fread(&tmp[i].timestamp,sizeof(tmp[i].timestamp),1,fp)<0) { 
+	perror("read");
+	return 0;
+	}
+	//check if the hash is still valid
+        if(tmp[i].hash!=hashCode(tmp[i])){
+	perror("hash is different");
+	return 0;}
+      }
+    //now i have to all the data stored and can delate the file_data
+   fclose(fp);
+   //destroy the file 
+   fclose(fopen(address, "wb"));
+   i=0;
+   for(i;i<j;i++){
+      if(strcmp(todel.timestamp,tmp[i].timestamp)==0&&todel.hash==tmp[i].hash)trov=1;
+      else{ //store the data
+	 if(storetofile(todel)){
+	    perror("store");
+	    return 1;}
+
+
+      }
+   }
+   //we have done with the file 
+    fclose(fp);
+    //at this point we have recreated the file without the todel PackageData
+    //check if it was in the old data 
+    if(trov==0)return 1;
+    //if evrything is done return 0
+    return 0;
+
+
+}
+int  main(int argc, char *argv[])
 {
     int s,socret; //s is for the socket ,socret is for returning some information to the socket 
     struct sockaddr_in saddr;

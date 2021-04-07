@@ -8,6 +8,62 @@
 #include <string.h>
 #include <time.h>
 #include"util.h"
+#include<errno.h>
+
+//functions to send an int trought a c stream socket
+int send_int(int num, int fd)
+{
+    int32_t conv = htonl(num);
+    char *data = (char*)&conv;
+    int left = sizeof(conv);
+    int rc;
+    do {
+        rc = write(fd, data, left);
+        if (rc < 0) {
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+                // use select() or epoll() to wait for the socket to be writable again
+            }
+            else if (errno != EINTR) {
+                return -1;
+            }
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    return 0;
+}
+//function to recive an int from a c socket 
+int receive_int(int *num, int fd)
+{
+    int32_t ret;
+    char *data = (char*)&ret;
+    int left = sizeof(ret);
+    int rc;
+    do {
+        rc = read(fd, data, left);
+        if (rc <= 0) { /* instead of ret */
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+                // use select() or epoll() to wait for the socket to be readable again
+            }
+            else if (errno != EINTR) {
+                return -1;
+            }
+        }
+        else {
+            data += rc;
+            left -= rc;
+        }
+    }
+    while (left > 0);
+    *num = ntohl(ret);
+    return 0;
+}
+
+
+
 //function that give an int value from a PackageData the return is int insted of long for be more light
 //max value of an int is 2,147,483,647 using a well tested algorithm like djb2 is usaly not enough for PackageData 
 int hashCode(PackageData tohash){
@@ -17,6 +73,7 @@ int hashCode(PackageData tohash){
     ret=ret+((int)tohash.from[i]+33*(int)tohash.to[i]);}//33 is the famus magic number
     ret=ret+tohash.size;
   for(i=0;i<TIMESTAMPS;i++)ret=ret+((int)tohash.timestamp[i]);
+  return ret;
 
   }
 

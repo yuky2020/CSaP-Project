@@ -15,7 +15,7 @@ int  selectuserto(int s,char *tmp){
   printf("1)search from adressBook\n");
   printf("2)search from all user\n");
   scanf("%d",&i);
-  printf("select wanted user by number");
+  printf("select wanted user by number\n");
   if(i==1){
       FILE *fp;//file where to place adressBook;
       char usernameList[ADDRESSBOOKLIMIT][MAXLIMIT];//list from adressBook
@@ -48,8 +48,8 @@ int  selectuserto(int s,char *tmp){
   else if(i==2){//retrive all user and selsct from the list 
       int type=9;//the type of call for this function
       if (write(s,&type,sizeof(int))<0) {
-	    perror("write");
-	    return 1;}
+	        perror("write");
+	        return 1;}
       sleep(1);
       printf("Sto per ricevere dei dati \n");	
       if (read(s,&j,sizeof(int))<0) {
@@ -588,7 +588,7 @@ int login(userData u, int t,int  s ){
 	           } 
 	           }while(i<5);
 
-         return 1;
+         return 0;
 
   }     
 
@@ -687,31 +687,34 @@ do{
   //printf("%d inbox messages for you \n",checkinbox(s)); //removed for testing reason could couse problem
   printf("1) show the new messages \n");
   printf("2) send a new message \n");
-  printf("3) add new contact in the address book \n ");
+  printf("3) add new contact in the address book \n");
   printf("4) search messages\n");
-  printf("9)EXIT\n");
+  printf("9) EXIT\n");
   scanf("%d",&i);
   switch (i) {
     case 1:{
 	   listallmessage(s,afantastic.username);
+     break;
 	 }
     case 2 ://select a user and then send a message user can be select eihter by address book or by writeing is name ;
 	 
-      {if(sendNew(afantastic.username,s))printf("message sent");
-       else perror("network proble with MDS");
-        
+      {if(sendNew(afantastic.username,s))perror("network problem with MDS");
+       else printf("message sent");
+       break; 
       }//close case 2;
     case 3:{
 	     if(addusertoadressbook(s)){perror("Error,Try Again");}
+       break;
 	   }
   
     case 4:{
 	     serchMessages(afantastic.username,s);
+       break;
 	   }	   
     	
-    case 9:{if(disconnect(s)){printf("error in disconection try again");i=5;}//disconnect from the mds return 1 in case of error
-
-	   }    
+    case 9:{if(disconnect(s)){printf("error in disconection try again");i=5; }//disconnect from the mds return 1 in case of error
+            break;
+            }    
     default: printf("This option is not avaible \n"); 
         
     }

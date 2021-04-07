@@ -685,9 +685,8 @@ void dowork(int c,int vdrs[VDRN])
 		     if (write (c,&inbox, sizeof (int)) < 0) {
 			      perror ("write");
 			      exit (1);
-
-			}
-
+           }
+          break;
 		   }
 		case 6:// if the type is 6 client want to send a message to another user;
 		   {int isSended=sendMessage(afantasticuser.username,vdrs,c);//this function return the number of inbox Audio message of a user;
@@ -695,6 +694,7 @@ void dowork(int c,int vdrs[VDRN])
 			perror ("write");
 			exit (1);
 			}
+         break;
 		   }	
 	 		
 	       case 8://if the type of the call is 8 the client is asking for is messages;
@@ -706,12 +706,13 @@ void dowork(int c,int vdrs[VDRN])
 			perror ("write");
 			exit (1);
 			}
+         break;
 		   }
 	       	
 	       case 9://if the type of call is 9 you are asking for all user;
 		   { 
 		      if(putalluser(c)){perror("cant send users to client ");}
-
+            break;
 		   }
 
 	       case 10://if the type of call is 10 you are asking for a delate from vdr;
@@ -724,13 +725,14 @@ void dowork(int c,int vdrs[VDRN])
 			perror ("write");
 			exit (1);
 			}
+         break;
 		      }
 
 	       case 5:{printf("CHILD-CLOSE  REQUESTED");}
 	 	default:
 		      {perror("Malicius client is plausible now i kill this child");
 		      type=5;}
-	 		
+            break;           
 	 }
 
 
