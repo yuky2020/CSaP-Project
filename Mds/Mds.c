@@ -261,9 +261,9 @@ int putalluser(int c ){
          perror("sem_close failed");
          exit(0);}
    //write the number of username you are about to send ;
-   if (write(c,&i,sizeof(int))<0) {
-	perror("write");
-	return 1;}
+   if (send_int(n,c)) {
+	      perror("write");
+	      return 1;}
    
    for(int j=0;j<i;j++){
       len=strlen(tmp[j]);
@@ -674,8 +674,8 @@ void dowork(int c,int vdrs[VDRN])
     vdrIndex=getvdrIndex(afantasticuser.username,vdrs);
 
     do{
-        if (read(c, &type, sizeof(int)) < 0) {
-	         perror ("read");
+        if (receive_int(&type,c) < 0) {
+	         perror ("read type");
 	         exit (1);
 	         }
 	 switch (type) {

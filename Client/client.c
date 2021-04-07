@@ -47,17 +47,18 @@ int  selectuserto(int s,char *tmp){
 
   else if(i==2){//retrive all user and selsct from the list 
       int type=9;//the type of call for this function
-      if (write(s,&type,sizeof(int))<0) {
+      if (send_int(type,s)) {
 	        perror("write");
 	        return 1;}
       sleep(1);
       printf("Sto per ricevere dei dati \n");	
-      if (read(s,&j,sizeof(int))<0) {
+      if (receive_int(&j,s)) {
 	        perror("write");
 	        return 1;}
       //at the lest there is one user
-      printf("%d",j); 
-      if(j<1){perror("problem with MDS"); return 1;}
+      printf("%d",j);
+      sleep(5); 
+      if(j<=1){perror("problem with MDS"); return 1;}
       char usernamesist[j][MAXLIMIT];
       sleep(1);
       //char usernameList[MAXLIMIT][MAXLIMIT]; here for testing pourpose
