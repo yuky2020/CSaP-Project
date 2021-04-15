@@ -11,7 +11,7 @@
 //function to select a user form addressbook or from all user @param s:socket to MDS,@param *tmp string  to save the user to;
 int  selectuserto(int s,char *tmp){
   int len; //lenght of evry char that is sended;
-  int j,i=0;//j is the nuber of user actualy in server
+  int j,ru,i=0;//ru is the nuber of user actualy in server
   printf("1)search from adressBook\n");
   printf("2)search from all user\n");
   scanf("%d",&i);
@@ -52,18 +52,19 @@ int  selectuserto(int s,char *tmp){
 	        return 1;}
       sleep(1);
       printf("Sto per ricevere dei dati \n");	
-      if (receive_int(&j,s)) {
+      if (receive_int(&ru,s)) {
 	        perror("write");
-	        return 1;}
+	        return 1;
+          }
       //at the lest there is one user
-      printf("%d",j);
+      printf("actualy registred users %d \n",ru);
       sleep(5); 
-      if(j<=1){perror("problem with MDS"); return 1;}
-      char usernamesist[j][MAXLIMIT];
+      if(ru<=1){perror("problem with MDS"); return 1;}
+      char usernamesist[ru][MAXLIMIT];
       sleep(1);
       //char usernameList[MAXLIMIT][MAXLIMIT]; here for testing pourpose
       //read all the username and print it 
-      for(int k=0;k<j;j++){
+      for(int k=0;k<j;k++){
         //read the lenght of the next string; 
         if(read(s,&len,sizeof(int))<0){perror("read"); return 1; }
         //read from socket and print for the user
@@ -554,7 +555,6 @@ int login(userData u, int t,int  s ){
         int i;
         PackageData tosend;
 	      AudioDataf messagetosend;
-	      tosend.size=sizeof(tosend.message);
         strcpy(tosend.from,username);
       	if(selectuserto(s,tosend.to)){//select the uset to send the data to
             perror("Problem with mds"); 
@@ -564,6 +564,7 @@ int login(userData u, int t,int  s ){
       	strcpy(tosend.timestamp,asctime( localtime(&ltime)));//Get a timestamp of the actual moment in a redable format;
         messagetosend = recordP();
         tosend.message=messagetosend;
+        tosend.size=sizeof(tosend.message);
 	      tosend.hash=hashCode(tosend);
         do{ printf("1) send the message\n");
 	          printf("2) listen the message before send it\n");
