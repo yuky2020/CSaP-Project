@@ -175,7 +175,8 @@ int storetofile(PackageData tostore){
 	perror("write");
 	return 1;
 	}
-	//write the hash
+	//write the hashsudo make install
+
         if (fwrite(&tostore.hash,sizeof(tostore.hash),1,fp)<0) { 
 	perror("write");
 	return 1;

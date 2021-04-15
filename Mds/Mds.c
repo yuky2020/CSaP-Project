@@ -331,7 +331,7 @@ int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
     if(tosend.hash!=hashCode(tosend)){
 	perror("hash is different");
 	return 1;}
-    //ceck if the username is =to the from ;
+    //check if the username is =to the from ;
     if (strcmp(username,tosend.from)==0){
 	  perror("sombody is try to send a message as anoter user");
 	  return 1;
@@ -416,7 +416,7 @@ int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c)
 	perror("write");
 	return 1;}
    // send the username to the vdr ;
-   if (write(vdrs[vdrIndex],&username,sizeof(char[MAXLIMIT]))<0) {
+   if (write(vdrs[vdrIndex],username,sizeof(char[20]))<0) {
 	perror("write");
 	return 1;}
    for(int i=0;i<inboxN;i++){
@@ -532,7 +532,7 @@ int registeru(userData afantasticuser){
 
 
    // save the address of the file 
-   char address[(MAXLIMIT+10)] = {'\0'};
+   char address[(MAXLIMIT+20)] = {'\0'};
    sprintf(address, "users/%s.user", afantasticuser.username);
    //check if the file alredy exist and if it is the case return 0
    if ((fp = fopen(address, "rb")))
@@ -594,7 +594,7 @@ int autenticate(userData afantasticuser){
     FILE *fp;
 
    // save the address of the file 
-   char address[(MAXLIMIT+10)] = {'\0'};
+   char address[(MAXLIMIT+20)] = {'\0'};
    sprintf(address, "users/%s.user", afantasticuser.username);
     //check if the file alredy exist and if it is the case return 0
    fp = fopen(address, "rb");
@@ -671,7 +671,8 @@ void dowork(int c,int vdrs[VDRN])
     
     //from now we are logged so the server can start recive varius type of packages
     //lets check if we have alredy a vdr for this client and if not select one randomicaly;
-    vdrIndex=getvdrIndex(afantasticuser.username,vdrs);
+      vdrIndex=getvdrIndex(afantasticuser.username,vdrs);
+    
 
     do{
         if (receive_int(&type,c) < 0) {
