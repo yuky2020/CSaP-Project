@@ -64,7 +64,7 @@ int  selectuserto(int s,char *tmp){
       sleep(1);
       //char usernameList[MAXLIMIT][MAXLIMIT]; here for testing pourpose
       //read all the username and print it 
-      for(int k=0;k<j;k++){
+      for(int k=0;k<ru;k++){
         //read the lenght of the next string; 
         if(read(s,&len,sizeof(int))<0){perror("read"); return 1; }
         //read from socket and print for the user
@@ -72,15 +72,15 @@ int  selectuserto(int s,char *tmp){
 	        perror("read");
 	        return 1;}
        printf("%d  %s\n",(k+1),usernamesist[k]);
-        sleep(1);
+        
       
         }
-    if (read(s,&type,sizeof(int))<0) {
+    if (receive_int(&type,s)<0) {
 	  perror("read");
 	  return 1;}
     //type is used to store the end of trasmission from MDS;	
     if(type!=1) {
-	  perror("write");
+	  perror("type");
 	  return 1;}
     type=5;//end of trasmission for MDS
     if (write(s,&type,sizeof(type))<0) {

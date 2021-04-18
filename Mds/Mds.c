@@ -279,7 +279,7 @@ int putalluser(int c ){
 
    }
    i=1;//send 1 to let know the client that you have done
-   if (write(c,&i,sizeof(int))<0) {
+   if (send_int(i,c)<0) {
 	perror("write");
 	return 1;}
    //wait aknowleg from client 
