@@ -265,7 +265,7 @@ int putalluser(int c ){
 	      perror("write");
 	      return 1;}
    
-   for(int j=0;j<i;j++){
+   for(int j=0;j<=i;j++){
       len=strlen(tmp[j]);
       //write the len as described in 
       if(write(c,&len,sizeof(int))<0){

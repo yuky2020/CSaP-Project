@@ -87,11 +87,11 @@ int  selectuserto(int s,char *tmp){
 	  perror("write");
 	  return 1;}
 	
-
+    printf("select wanted user ");
     //actual_user enter the user wanted;
     do{ scanf("%d",&i);
-      if (i>j)printf("This user is still not in list try again \n");
-      }while(i>j);
+      if (i>ru)printf("This user is still not in list try again \n");
+      }while(i>ru);
 
     strcpy(tmp,usernamesist[i]);
     //free(usernameList);//fre the user list not useful anymore;
@@ -572,13 +572,15 @@ int login(userData u, int t,int  s ){
 	          printf("4)change the destinatary user actualy is: %s \n",tosend.to);
             printf("5)go back to main menu ");
 	          scanf("%d",&i);
+
+
 	          if(i==1){
 	            printf("sending your message \n");
 	          if(sendMessage(tosend,s)){
               printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
               return 1;}
 	          else{printf("MESSAGE SENT SUCESSFULLY\n");
-                 printf("1)inoltrate this massage to another user");
+                 printf("1)inoltrate this massage to another user\n");
 		             printf("2)go back to the main menu\n");
 		             scanf("%d",&i);
 		             i=i+3;//smart move in this way if you have pressed 2 you go back and if you press 1 you inoltrate the message
@@ -686,7 +688,7 @@ do{ if(t==0){printf("1)Login\n");
 printf("Welcome Back %s \n",afantastic.username );
 int i;
 do{
-  //printf("%d inbox messages for you \n",checkinbox(s)); //removed for testing reason could couse problem
+  printf("%d inbox messages for you \n",checkinbox(s)); //removed for testing reason could couse problem
   printf("1) show the new messages \n");
   printf("2) send a new message \n");
   printf("3) add new contact in the address book \n");
