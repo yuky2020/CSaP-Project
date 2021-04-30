@@ -30,12 +30,12 @@ int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
    sem_wait(sem);//lock the semaphore so you can write to the VDR socket without risk 
    //write the type of request to the socket
    //write vdrtype to the socket    
-   if (write(vdrs[vdrIndex],&vdrtype,sizeof(int))<0) {
+   if (send_int(vdrtype,vdrs[vdrIndex])<0) {
 	 perror("write");
 	 exit(1);}
     // send the len of the string 
     len=strlen(usern);
-    if (write(vdrs[vdrIndex],&len,sizeof(int))<0) {
+    if (send_int(len,vdrs[vdrIndex])<0) {
 	 perror("write");
 	 exit(1);}
    //write username to the socket +1 for endian value 
@@ -44,7 +44,7 @@ int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
 	 exit(1);}
    //sleep(1);//give time to recive data and send the response from the i-th vdr process
    //read the result from actual vdr
-	    if (read(vdrs[vdrIndex],&inboxvdr,sizeof(int))<0) {
+	    if (receive_int(&inboxvdr,vdrs[vdrIndex])<0) {
 	    perror("read");
 	    exit(1);}
 
@@ -683,7 +683,7 @@ void dowork(int c,int vdrs[VDRN])
 	 	case 7: //if the type is 7 client want the number of inbox message  ;
 		   {int inbox=0;
 		     inbox=giveInbox(afantasticuser.username,vdrIndex,vdrs);//this function return the number of inbox Audio message of a user;
-		     if (write (c,&inbox, sizeof (int)) < 0) {
+		     if (send_int(inbox,c) < 0) {
 			      perror ("write");
 			      exit (1);
            }

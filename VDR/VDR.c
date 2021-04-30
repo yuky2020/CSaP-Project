@@ -351,8 +351,7 @@ int delateMessage(int s){
    fclose(fp);
    //destroy the file 
    fclose(fopen(address, "wb"));
-   i=0;
-   for(i;i<j;i++){
+   for(i=0;i<j;i++){
       if(strcmp(todel.timestamp,tmp[i].timestamp)==0&&todel.hash==tmp[i].hash)trov=1;
       else{ //store the data
 	 if(storetofile(todel)){
@@ -434,7 +433,7 @@ int  main(int argc, char *argv[])
 do{
     
     // read the type of call from socket
-    if (read(s,&type,sizeof(type))<0) {
+    if (receive_int(&type,s)<0) {
 	perror("write");
 	exit(1);
     }
@@ -463,7 +462,7 @@ do{
 	char user[MAXLIMIT];
         int len;
         //read the len of the user you are about to recive
-         if (read(s,&len,sizeof(int))<0) {
+         if (receive_int(&len,s)<0) {
 	perror("read");
 	exit(1);}
 	//read the username to search inbox;
@@ -473,7 +472,7 @@ do{
         //socret= ninbox is 0 either if the file with ninbox dosen't esist or if ninbox=0;
 	socret=getinbox(user);
         //return socret to the socket
-        if (write(s,&socret,sizeof(socret))<0) {
+        if (send_int(socret,s)<0) {
 	perror("write");
 	exit(1);}
        }

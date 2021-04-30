@@ -106,12 +106,12 @@ int  selectuserto(int s,char *tmp){
 int checkinbox(int s){
   int ret,type=7; //7 is the type for this call
     //write type in the socket
-    if (write(s,&type,sizeof(int))<0) {
+    if (send_int(type,s)<0) {
 	    perror("write");
 	    exit(1);
       }
     //then the socket should return the number of massage
-    if (read(s,&ret,sizeof(int))<0) {
+    if (receive_int(&ret,s)<0) {
 	    perror("read");
 	    exit(1); }
      return ret;
