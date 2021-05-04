@@ -9,8 +9,8 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#define SEM_NAME "/semaphorezzz"//is the prefix in the name of every semaphore used for VDR
-#define SEM_NAMEUL "/semaphorezzzul"//is the name of the semaphore for the userlist
+#define SEM_NAME "/semaphorev"//is the prefix in the name of every semaphore used for VDR
+#define SEM_NAMEUL "/semaphoreul"//is the name of the semaphore for the userlist
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)// "Permessi del semaforo"
 #define INITIAL_VALUE 1//intial value of the semaphore 
 #define VDRN 1 //Number of vdr used
@@ -76,12 +76,12 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
             }
             sem_wait(sem);//lock the semaphore so you can write to the VDR socket
 	    //write vdrtype to the socket    
-	    if (write(vdrs[i],&vdrtype,sizeof(int))<0) {
+	    if (send_int(vdrtype,vdrs[i])<0) {
 		  perror("write");
 		  exit(1);}
 	    //write username to the socket
        len=strlen(username);
-       if (write(vdrs[i],&len,sizeof(int))<0) {
+       if (send_int(len,vdrs[i])<0) {
 		  perror("write");
 		  exit(1);}
 	    if (write(vdrs[i],username,len+1)<0) {
@@ -813,21 +813,21 @@ int main()
 	//type for the echo call to a vdr process
       int echo=1;
 	//write the echo in the socket 
-      if (write(vdrs[runningvdr],&echo,sizeof(echo))<0) {
-	perror("write");
-	exit(1);
-	}
+      if (send_int(echo,vdrs[runningvdr])<0) {
+	   perror("write");
+	   exit(1);
+	   }
       sleep(1);//time to get the result write in the socket by vdr
       //read from the socket the value 
-      if (read(vdrs[runningvdr],&echo,sizeof(echo))<0) {
-	perror("write");
-	exit(1);}
+      if (receive_int(&echo,vdrs[runningvdr])<0) {
+	   perror("write");
+	   exit(1);}
 
       //ceck if the response is valid and if its not close the connection 
       if(echo!=1){
-	   close(vdrs[runningvdr]); }
-      else runningvdr++;
-    } 
+	      close(vdrs[runningvdr]); }
+         else runningvdr++;
+      } 
     
 
 

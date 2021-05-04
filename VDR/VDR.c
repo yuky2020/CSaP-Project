@@ -442,7 +442,7 @@ do{
     // Read (or recv) from socket
     printf("echo call from Mds \n");
     //return the same value 1 for notifing that the Vdr is online ;
-    if (write(s,&type,sizeof(type))<0) {
+    if (send_int(type,s)<0) {
 	perror("write");
 	exit(1);
 	}}
