@@ -138,7 +138,7 @@ int readandsendMessages(char user[MAXLIMIT],int s ){
       
 }
 
-//function to store a message to a file
+//function to store a message to a file and add 1 to ninbox 
 int storetofile(PackageData tostore){
     int ninbox=0;
     FILE *fp;
@@ -175,7 +175,7 @@ int storetofile(PackageData tostore){
 	perror("write");
 	return 1;
 	}
-	//write the hashsudo make install
+	//write the hash
 
         if (fwrite(&tostore.hash,sizeof(tostore.hash),1,fp)<0) { 
 	perror("write");
@@ -492,7 +492,7 @@ do{
 	char user[MAXLIMIT];
         int len;
 	//read the username to search inbox;
-        if (read(s,&len,sizeof(len))<0) {
+        if (receive_int(&len,s)<0) {
 	perror("read");
 	exit(1);}
         if(read(s,user,len+1)<0){
@@ -503,7 +503,7 @@ do{
         //socret= return 0 if the file with ninbox dosen't esist 1 else ;
 	socret=checkuser(user);
         //return socret to the socket
-        if (write(s,&socret,sizeof(socret))<0) {
+        if (send_int(socret,s)<0) {
 	perror("write");
 	exit(1);}
     }

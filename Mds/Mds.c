@@ -89,9 +89,9 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
 		  exit(1);}
 	    //sleep(100);//give time to recive data and send the response from the i-th vdr process,not useful removed 
             //read the result from actual vdr
-	    if (read(vdrs[i],&retvdr,sizeof(retvdr))<0) {
-	    perror("read");
-	    exit(1);}
+	    if (receive_int(&retvdr,vdrs[i])<0) {
+	      perror("read");
+	      exit(1);}
 
             sem_post(sem);//unlock the semaphore "incresing counter"
 	    if (sem_close(sem) < 0){
@@ -273,9 +273,9 @@ int putalluser(int c ){
          return 1;
       }
 
-       if (write(c,tmp[j],strlen(tmp[j])+1)<0) {
-	 perror("write");
-	 return 1;}
+      if (write(c,tmp[j],strlen(tmp[j])+1)<0) {
+	      perror("write");
+	      return 1;}
 
    }
    i=1;//send 1 to let know the client that you have done
@@ -283,8 +283,7 @@ int putalluser(int c ){
 	perror("write");
 	return 1;}
    //wait aknowleg from client 
-   sleep(1);
-   if (read(c,&i,sizeof(int))<0) {
+   if (receive_int(&i,c)<0) {
 	perror("read");
         return 1;}
    //check return from client value anyway dont do nothing 
@@ -294,48 +293,11 @@ int putalluser(int c ){
 
    
 }
-//send a message to get stored in the vdr @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
-int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
-   PackageData 	tosend;//the package to send to recive from client and send to the vdr
+
+int storeMessage(PackageData tosend,int vdrs[VDRN]){
    sem_t 	*sem;//semaphore for lock the vdr while used
    int 		vdrToIndex;//the index of the vdr of the to username;
    int          vdrReturn;//the final return value from vdr;
-   tosend.type=6;
-    //read the user from the data is sended 
-    if (read(c,&tosend.from,sizeof(tosend.from))<0) {
-
-	perror("read");
-	return 1;}
-    //read the user to the message is sended
-    if (read(c,&tosend.to,sizeof(tosend.to))<0) {
-	perror("read");
-	return 1;}
-    //read the size of audio data
-    if (read(c,&tosend.size,sizeof(tosend.size))<0) {
-	perror("read");
-	return 1;}
-    //read the audioData 
-    if (read(c,&tosend.message,tosend.size)<0) {
-	perror("read");
-	return 1;}
-
-    //read the hash
-    if (read(c,&tosend.hash,sizeof(tosend.hash))<0) {
-	perror("read");
-	return 1;}
-    //read timestamp
-    if (read(c,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
-	perror("read");
-	return 1;}
-    //check if the hash is still valid 
-    if(tosend.hash!=hashCode(tosend)){
-	perror("hash is different");
-	return 1;}
-    //check if the username is =to the from ;
-    if (strcmp(username,tosend.from)==0){
-	  perror("sombody is try to send a message as anoter user");
-	  return 1;
-	  }
    //check which is the vdr for the to user ;
    vdrToIndex=getvdrIndex(tosend.to,vdrs);
    //now open and lock the semaphore 
@@ -396,6 +358,52 @@ int sendMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
     return 1;
 
 }
+
+//reciv a message from the client and ask vdr to store it @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
+int ReciveMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
+   PackageData 	tosend;//the package to send to recive from client and send to the vdr
+ 
+   tosend.type=6;
+    //read the user from the data is sended 
+    if (read(c,&tosend.from,sizeof(tosend.from))<0) {
+         perror("read");
+	      return 1;}
+    //read the user to the message is sended
+    if (read(c,&tosend.to,sizeof(tosend.to))<0) {
+	      perror("read");
+	      return 1;}
+    //read the size of audio data
+    if (receive_int(&tosend.size,c)<0) {
+	      perror("read");
+	      return 1;}
+    //read the audioData 
+    if (read(c,&tosend.message,tosend.size)<0) {
+	      perror("read");
+	      return 1;}
+
+    //read the hash
+    if (receive_int(&tosend.hash,c)<0) {
+	      perror("read");
+	      return 1;}
+    //read timestamp
+    if (read(c,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
+	      perror("read");
+	      return 1;}
+    //check if the hash is still valid 
+    if(tosend.hash!=hashCode(tosend)){
+	      perror("hash is different");
+	      return 1;}
+    //check if the username is =to the from ;
+    //if (strcmp(username,tosend.from)==0){
+	 //     perror("sombody is try to send a message as anoter user");
+	 //       return 1;}
+
+   printf("Message recived now i store it in the delegated  vdr");
+   if (storeMessage(tosend,vdrs))return 1;
+   else return 0;
+   }
+//send a message to the vdr for store it
+
 //function to send all message destinated to a user; to that user;
 int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c){
    int vdrToType=8;//vdr type for this operation
@@ -690,15 +698,15 @@ void dowork(int c,int vdrs[VDRN])
           break;
 		   }
 		case 6:// if the type is 6 client want to send a message to another user;
-		   {int isSended=sendMessage(afantasticuser.username,vdrs,c);//this function return the number of inbox Audio message of a user;
-		     if (write (c,&isSended, sizeof (int)) < 0) {
-			perror ("write");
-			exit (1);
-			}
+		   {int isSended=ReciveMessage(afantasticuser.username,vdrs,c);//this function return the number of inbox Audio message of a user;
+		     if (send_int(isSended,c) < 0) {
+			      perror ("write");
+			      exit (1);
+			      }
          break;
 		   }	
 	 		
-	       case 8://if the type of the call is 8 the client is asking for is messages;
+	   case 8://if the type of the call is 8 the client is asking for is messages;
 		   {int isDone=0;
 		    //function return 1 if there is a problem
 		    if(getClientMessage(afantasticuser.username,vdrIndex,vdrs,c)){perror("client recive wrong message");
@@ -710,26 +718,27 @@ void dowork(int c,int vdrs[VDRN])
          break;
 		   }
 	       	
-	       case 9://if the type of call is 9 you are asking for all user;
+	   case 9://if the type of call is 9 you are asking for all user;
 		   { 
 		      if(putalluser(c)){perror("cant send users to client ");}
             break;
 		   }
 
-	       case 10://if the type of call is 10 you are asking for a delate from vdr;
+	   case 10://if the type of call is 10 you are asking for a delate from vdr;
 		      {int isDel=0;
-		       if(delatefromvdr(afantasticuser.username,vdrs,vdrIndex,c))
-			 {perror("cant send users to client ");
-			  isDel=1;}
-		       //write the result to the socket 0 for success 1 for error
-			if (write (c,&isDel, sizeof (int)) < 0) {
-			perror ("write");
-			exit (1);
-			}
-         break;
-		      }
+		      if(delatefromvdr(afantasticuser.username,vdrs,vdrIndex,c))
+			      {perror("cant send users to client ");
+			      isDel=1;}
+		      //write the result to the socket 0 for success 1 for error
+			   if (write (c,&isDel, sizeof (int)) < 0) {
+			      perror ("write");
+			      exit (1);
+			      }
+               break;
+		         }
 
-	       case 5:{printf("CHILD-CLOSE  REQUESTED");}
+	   case 5:{printf("CHILD-CLOSE  REQUESTED");break;}
+
 	 	default:
 		      {perror("Malicius client is plausible now i kill this child");
 		      type=5;}
@@ -779,9 +788,13 @@ int main()
 
     //create the stream socket for the VDRs
     if ((vdr=socket(AF_INET,SOCK_STREAM,0))<0) {
-	perror("socket");
-	exit(1);
+	      perror("socket");
+	      exit(1);
     }
+    if (setsockopt(vdr,SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+         {perror("setsockopt(SO_REUSEADDR) failed");
+          exit(1);}
+
     puts("client socket done waiting for all vdr connection and echo each one ");
 
     saddr.sin_family=AF_INET;
@@ -833,9 +846,12 @@ int main()
 
     //create the stream socket for the client 
     if ((s=socket(AF_INET,SOCK_STREAM,0))<0) {
-	perror("socket");
-	exit(1);
-    }
+	      perror("socket");
+	      exit(1);
+         }
+    if (setsockopt(s,SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+         {perror("setsockopt(SO_REUSEADDR) failed");
+          exit(1);}
     puts("client socket done");
 
     saddr.sin_family=AF_INET;

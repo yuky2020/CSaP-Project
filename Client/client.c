@@ -83,15 +83,16 @@ int  selectuserto(int s,char *tmp){
 	  perror("type");
 	  return 1;}
     type=5;//end of trasmission for MDS
-    if (write(s,&type,sizeof(type))<0) {
+    if (send_int(type,s)<0) {
 	  perror("write");
 	  return 1;}
 	
     printf("select wanted user ");
     //actual_user enter the user wanted;
     do{ scanf("%d",&i);
-      if (i>ru)printf("This user is still not in list try again \n");
-      }while(i>ru);
+        i--;
+      if (i>ru||i<0)printf("This user is still not in list try again \n");
+      }while(i>ru||i<0);
 
     strcpy(tmp,usernamesist[i]);
     //free(usernameList);//fre the user list not useful anymore;
@@ -128,38 +129,43 @@ int disconnect(int s){
 }
 //Function to send a message to MDS @Param PackageData:Struct that contains the message,and other value see util.h @Param s socket conected  to MDS
 int sendMessage(PackageData tosend,int s){
+    int rvalue=1; // the return falue from mds if eevrything as gone fine is 0:
     //write the type  to MDS
-    if (write(s,&tosend.type,sizeof(tosend.type))<0) {
-	perror("write");
-	return 1;}
+    if (send_int(tosend.type,s)<0) {
+	      perror("write");
+	      return 1;}
  
     //write  the user from the data is sended 
     if (write(s,&tosend.from,sizeof(tosend.from))<0) {
-	perror("write");
-	return 1;}
+	      perror("write");
+	      return 1;}
     //write the user to the message is sended
     if (write(s,&tosend.to,sizeof(tosend.to))<0) {
-	perror("write");
-	return 1;}
+	    perror("write");
+	    return 1;}
     //write the size of audio data
-    if (write(s,&tosend.size,sizeof(tosend.size))<0) {
-	perror("write");
-	return 1;}
+    if (send_int(tosend.size,s)<0) {
+	      perror("write");
+	      return 1;}
     //write the audioData 
     if (write(s,&tosend.message,tosend.size)<0) {
-	perror("write");
-	return 1;}
+	      perror("write");
+	      return 1;}
 
     //write the hash
-    if (write(s,&tosend.hash,sizeof(tosend.hash))<0) {
-	perror("write");
-	return 1;}
+    if (send_int(tosend.hash,s)<0) {
+	      perror("write");
+	      return 1;}
     //write timestamp
     if (write(s,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
-	perror("write");
-	return 1;}
+	      perror("write");
+	      return 1;}
+    //check that everything was fine 
+    if (receive_int(&rvalue,s)<0) {
+	      perror("write");
+	      return 1;}
 
-    return 0;
+    return rvalue;
 
 
 
@@ -566,6 +572,7 @@ int login(userData u, int t,int  s ){
         tosend.message=messagetosend;
         tosend.size=sizeof(tosend.message);
 	      tosend.hash=hashCode(tosend);
+        tosend.type=6;
         do{ printf("1) send the message\n");
 	          printf("2) listen the message before send it\n");
 	          printf("3) to return to the main menu\n");
