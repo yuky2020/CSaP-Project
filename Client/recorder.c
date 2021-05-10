@@ -149,7 +149,8 @@ AudioDataf recordP(void)
    switch(fork()) {
         case -1:
             perror("fork");  /* something went wrong */
-            exit(1);         /* parent exits */
+            exit(1);
+            break;         /* parent exits */
 
         case 0:
             //open semaphore in the child process
@@ -160,8 +161,10 @@ AudioDataf recordP(void)
             exit(EXIT_FAILURE);
             }
             char ef;//carattere di chiusura
-            sleep(3);//time for start registration from child
-            getchar();
+            //sleep(3) ;time for start registration from child
+            do {ef=getchar();}
+            while(ef!='e');
+            
             
             //wait for a key form tty
             sem_wait(sem1); //lock the semaphore so the child know that has to stop working
@@ -170,6 +173,7 @@ AudioDataf recordP(void)
             exit(EXIT_FAILURE);}
             exit(0);
             }
+            break;
 
         default:
              while(!sem_trywait(sem1))// check if the binary semaphore is locked (so if the parent as locked you stop the registration) then lockit
@@ -196,6 +200,8 @@ AudioDataf recordP(void)
                 sem_post(sem1); 
 
             }
+            break;
+
         if (sem_unlink(SEM_NAME) < 0) //unlink the semaphore
         perror("sem_unlink(3) failed");   
          sem_destroy(sem1);//destroy the semaphore after usage good pratice
@@ -212,8 +218,9 @@ AudioDataf recordP(void)
 done:
     free(sampleBlock.snippet);
     Pa_Terminate();
-    if (err!=0)
-    perror("err");
+    if (err!=0){
+        printf("an error occour while recording");
+        perror("err");}
 
 
 return toplayback;

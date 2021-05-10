@@ -362,14 +362,22 @@ int storeMessage(PackageData tosend,int vdrs[VDRN]){
 //reciv a message from the client and ask vdr to store it @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
 int ReciveMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
    PackageData 	tosend;//the package to send to recive from client and send to the vdr
- 
+   int fromLenght;
+   int toLenght;
    tosend.type=6;
-    //read the user from the data is sended 
-    if (read(c,&tosend.from,sizeof(tosend.from))<0) {
+    //read the user from the data is sended
+     if (receive_int(&fromLenght,c)<0) {
+	      perror("recive int ");
+	      return 1;} 
+    if (read(c,&tosend.from,fromLenght+1)<0) {
          perror("read");
-	      return 1;}
+	      return 1;}    
     //read the user to the message is sended
-    if (read(c,&tosend.to,sizeof(tosend.to))<0) {
+    //frist the lenght
+    if (receive_int(&toLenght,c)<0) {
+	      perror("recive int ");
+	      return 1;}
+    if (read(c,&tosend.to,toLenght+1)<0) {
 	      perror("read");
 	      return 1;}
     //read the size of audio data

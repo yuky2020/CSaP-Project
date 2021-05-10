@@ -134,13 +134,19 @@ int sendMessage(PackageData tosend,int s){
     if (send_int(tosend.type,s)<0) {
 	      perror("write");
 	      return 1;}
- 
-    //write  the user from the data is sended 
-    if (write(s,&tosend.from,sizeof(tosend.from))<0) {
+    //write  the user from the data is sended    
+    if (send_int(strlen(tosend.from),s)<0) {
+	      perror("write");
+	      return 1;}
+     
+    if (write(s,&tosend.from,strlen(tosend.from)+1)<0) {
 	      perror("write");
 	      return 1;}
     //write the user to the message is sended
-    if (write(s,&tosend.to,sizeof(tosend.to))<0) {
+    if (send_int(strlen(tosend.to),s)<0) {
+	      perror("write");
+	      return 1;}
+    if (write(s,&tosend.to,strlen(tosend.to)+1)<0) {
 	    perror("write");
 	    return 1;}
     //write the size of audio data
@@ -720,6 +726,14 @@ do{
   
     case 4:{
 	     serchMessages(afantastic.username,s);
+       break;
+	   }	   
+
+     case 5:{
+       printf("hidden option to test micrphone");
+	     AudioDataf a;
+       a= recordP();
+       playback(a);
        break;
 	   }	   
     	
