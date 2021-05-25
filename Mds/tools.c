@@ -64,18 +64,19 @@ int receive_int(int *num, int fd)
 
 
 
-//function that give an int value from a PackageData the return is int insted of long for be more light
-//max value of an int is 2,147,483,647 using a well tested algorithm like djb2 is usaly not enough for PackageData 
+//function that give an int32 value from a PackageData the return is int32 insted of long or Byte(i dont use hard coded algorithhm like sha )  for be more light 
 int hashCode(PackageData tohash){
+  return 0;
 
-  int i,ret;//return value
-  for(i=0;i<MAXLIMIT;i++){
+  /*int32_t i,ret;//return value
+  for(i=0;i<strlen(tohash.from);i++){
     ret=ret+((int)tohash.from[i]+33*(int)tohash.to[i]);}//33 is the famus magic number
     ret=ret+tohash.size;
   for(i=0;i<TIMESTAMPS;i++)ret=ret+((int)tohash.timestamp[i]);
   return ret;
-
+*/
   }
+
 
 //compare between two date in asctime format  return 1 if a>b 0 if b=a -1 if a<b using the asci value of number in predeterminated position 
 int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]){

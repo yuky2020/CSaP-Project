@@ -135,9 +135,7 @@ int sendMessage(PackageData tosend,int s){
 	      perror("write");
 	      return 1;}
     //write  the user from the data is sended    
-    if (send_int(strlen(tosend.from),s)<0) {
-	      perror("write");
-	      return 1;}
+    
      
     if (write(s,&tosend.from,strlen(tosend.from)+1)<0) {
 	      perror("write");

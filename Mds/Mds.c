@@ -314,31 +314,40 @@ int storeMessage(PackageData tosend,int vdrs[VDRN]){
    if (write(vdrs[vdrToIndex],&tosend.type,sizeof(tosend.type))<0) {
 	perror("write");
 	return 1;}
+
+
+   if (send_int(strlen(tosend.from),vdrs[vdrToIndex])<0) {
+	      perror("write");
+	      return 1;}
         
-   if (write(vdrs[vdrToIndex],&tosend.from,sizeof(tosend.from))<0) {
+   if (write(vdrs[vdrToIndex],&tosend.from,strlen(tosend.from)+1)<0) {
 	perror("write");
 	return 1;}
+
+   if (send_int(strlen(tosend.to),vdrs[vdrToIndex])<0) {
+	      perror("write");
+	      return 1;}
         
-   if (write(vdrs[vdrToIndex],&tosend.to,sizeof(tosend.to))<0) {
-	perror("write");
-	return 1;}
+   if (write(vdrs[vdrToIndex],&tosend.to,strlen(tosend.to)+1)<0) {
+	   perror("write");
+	   return 1;}
         
 
-   if (write(vdrs[vdrToIndex],&tosend.size,sizeof(tosend.size))<0) {
+   if (send_int(tosend.size, vdrs[vdrToIndex])<0) {
 	perror("write");
 	return 1;}
         
-
+   //send the size the message
    if (write(vdrs[vdrToIndex],&tosend.message,tosend.size)<0) {
-	perror("write");
-	return 1;}
+	   perror("write");
+	   return 1;}
        
+   //send the hash    
+   if (send_int(tosend.hash ,vdrs[vdrToIndex])<0) {
+	   perror("write");
+	   return 1;}
        
-   if (write(vdrs[vdrToIndex],&tosend.hash,sizeof(tosend.hash))<0) {
-	perror("write");
-	return 1;}
-       
- 
+   //send the timestamp
    if (write(vdrs[vdrToIndex],&tosend.timestamp,sizeof(tosend.timestamp))<0) {
 	perror("write");
 	return 1;}
@@ -350,7 +359,7 @@ int storeMessage(PackageData tosend,int vdrs[VDRN]){
   
    sleep(1);// wait for get a response from vdr ;
    //read response from vdr
-   if (read(vdrs[vdrToIndex],&vdrReturn,sizeof(vdrReturn))<0) {
+   if (receive_int(&vdrReturn,vdrs[vdrToIndex])<0) {
 	perror("read");
 	return 1;}
    //then return 0 if everything goes fine
@@ -398,6 +407,8 @@ int ReciveMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
 	      perror("read");
 	      return 1;}
     //check if the hash is still valid 
+    printf("%s,%s /n",tosend.to,tosend.from);
+    printf("%d",tosend.hash);
     if(tosend.hash!=hashCode(tosend)){
 	      perror("hash is different");
 	      return 1;}
@@ -583,8 +594,9 @@ int registeru(userData afantasticuser){
         fclose(fp);
         return 0;
     }
-    n++;
+    n=n+1;
     fwrite(&n,sizeof(int),1,fp);
+    fclose(fp);
 
 
 
@@ -706,7 +718,7 @@ void dowork(int c,int vdrs[VDRN])
           break;
 		   }
 		case 6:// if the type is 6 client want to send a message to another user;
-		   {int isSended=ReciveMessage(afantasticuser.username,vdrs,c);//this function return the number of inbox Audio message of a user;
+		   {int isSended=ReciveMessage(afantasticuser.username,vdrs,c);
 		     if (send_int(isSended,c) < 0) {
 			      perror ("write");
 			      exit (1);

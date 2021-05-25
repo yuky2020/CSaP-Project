@@ -218,29 +218,38 @@ int storetofile(PackageData tostore){
 
 //function to store a Message from MDS
 int storeMessage(int s){
+    int fromLenght;
+    int toLenght;    
     PackageData tostore;
     tostore.type=6;
+    printf("Saving a messagge");
     //read the user from the data is sended 
-    if (read(s,&tostore.from,sizeof(tostore.from))<0) {
+    if (receive_int(&fromLenght,s)<0) {
+	      perror("recive int ");
+	      return 1;} 
+    if (read(s,&tostore.from,fromLenght+1)<0) {
 	perror("read");
 	return 1;}
     //read the user to the message is sended
-    if (read(s,&tostore.to,sizeof(tostore.to))<0) {
+    if (receive_int(&toLenght,s)<0) {
+	      perror("recive int ");
+	      return 1;}
+    if (read(s,&tostore.to,toLenght+1)<0) {
 	perror("read");
 	return 1;}
     //read the size of audio data
-    if (read(s,&tostore.size,sizeof(tostore.size))<0) {
-	perror("read");
-	return 1;}
+    if (receive_int(&tostore.size,s)<0) {
+	      perror("read");
+	      return 1;}
     //read the audioData 
     if (read(s,&tostore.message,tostore.size)<0) {
 	perror("read");
 	return 1;}
 
     //read the hash
-    if (read(s,&tostore.hash,sizeof(tostore.hash))<0) {
-	perror("read");
-	return 1;}
+    if (receive_int(&tostore.hash,s)<0) {
+	      perror("read");
+	      return 1;}
     //read timestamp
     if (read(s,&tostore.timestamp,sizeof(tostore.timestamp))<0) {
 	perror("read");
@@ -453,8 +462,8 @@ do{
 	//if the file is not stored set socret=0
 	if(storeMessage(s))socret=0;
 	//write socret in the socket
-        if (write(s,&socret,sizeof(socret))<0) {
-	perror("write");
+        if (send_int(socret,s)<0) {
+	perror("send");
 	exit(1);}
         }
     //type seven for get ninbox
