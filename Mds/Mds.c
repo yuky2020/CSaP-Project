@@ -311,54 +311,16 @@ int storeMessage(PackageData tosend,int vdrs[VDRN]){
    sem_wait(sem);//lock the semaphore so you can write to the VDR socket without risk 
    //now send the data trought socket to the vdr and serialize it
    //when we send the type we also trigger the vdr to save the data;
-   if (write(vdrs[vdrToIndex],&tosend.type,sizeof(tosend.type))<0) {
-	perror("write");
-	return 1;}
-
-
-   if (send_int(strlen(tosend.from),vdrs[vdrToIndex])<0) {
-	      perror("write");
-	      return 1;}
-        
-   if (write(vdrs[vdrToIndex],&tosend.from,strlen(tosend.from)+1)<0) {
-	perror("write");
-	return 1;}
-
-   if (send_int(strlen(tosend.to),vdrs[vdrToIndex])<0) {
-	      perror("write");
-	      return 1;}
-        
-   if (write(vdrs[vdrToIndex],&tosend.to,strlen(tosend.to)+1)<0) {
-	   perror("write");
-	   return 1;}
-        
-
-   if (send_int(tosend.size, vdrs[vdrToIndex])<0) {
-	perror("write");
-	return 1;}
-        
-   //send the size the message
-   if (write(vdrs[vdrToIndex],&tosend.message,tosend.size)<0) {
-	   perror("write");
-	   return 1;}
-       
-   //send the hash    
-   if (send_int(tosend.hash ,vdrs[vdrToIndex])<0) {
-	   perror("write");
-	   return 1;}
-       
-   //send the timestamp
-   if (write(vdrs[vdrToIndex],&tosend.timestamp,sizeof(tosend.timestamp))<0) {
-	perror("write");
-	return 1;}
-
+   if(send_PackageData(tosend,vdrs[vdrToIndex])){
+      perror("error sending data");
+      return 1;
+   }
+   
    sem_post(sem);//unlock the semaphore "incresing the  counter"
    if (sem_close(sem) < 0){
       perror("sem_close failed");
       exit(0);}
-  
-   sleep(1);// wait for get a response from vdr ;
-   //read response from vdr
+      
    if (receive_int(&vdrReturn,vdrs[vdrToIndex])<0) {
 	perror("read");
 	return 1;}
@@ -374,10 +336,7 @@ int ReciveMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
    if(recive_PackageData(&tosend,c)){
       perror("problem while sending to MDS");
       return 1;
-   };
-
-    
-
+   }
    printf("Message recived now i store it in the delegated  vdr");
    if (storeMessage(tosend,vdrs))return 1;
    else return 0;

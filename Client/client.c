@@ -128,54 +128,7 @@ int disconnect(int s){
 
 }
 //Function to send a message to MDS @Param PackageData:Struct that contains the message,and other value see util.h @Param s socket conected  to MDS
-int sendMessage(PackageData tosend,int s){
-    int rvalue=1; // the return falue from mds if eevrything as gone fine is 0:
-    //write the type  to MDS
-    if (send_int(tosend.type,s)<0) {
-	      perror("write");
-	      return 1;}
-    //write  the user from the data is sended    
-     if (send_int(strlen(tosend.from),s)<0) {
-	      perror("write");
-	      return 1;}
-     
-    if (write(s,&tosend.from,strlen(tosend.from)+1)<0) {
-	      perror("write");
-	      return 1;}
-    //write the user to the message is sended
-    if (send_int(strlen(tosend.to),s)<0) {
-	      perror("write");
-	      return 1;}
-    if (write(s,&tosend.to,strlen(tosend.to)+1)<0) {
-	    perror("write");
-	    return 1;}
-    //write the size of audio data
-    if (send_int(tosend.size,s)<0) {
-	      perror("write");
-	      return 1;}
-    //write the audioData 
-    if (write(s,&tosend.message,tosend.size)<0) {
-	      perror("write");
-	      return 1;}
 
-    //write the hash
-    if (send_int(tosend.hash,s)<0) {
-	      perror("write");
-	      return 1;}
-    //write timestamp
-    if (write(s,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
-	      perror("write");
-	      return 1;}
-    //check that everything was fine 
-    if (receive_int(&rvalue,s)<0) {
-	      perror("write");
-	      return 1;}
-
-    return rvalue;
-
-
-
-}
 //function to tell mds to delate a message 
 int delateMessage(PackageData todel,int s){
   int type=10; // type for this call;
@@ -185,7 +138,7 @@ int delateMessage(PackageData todel,int s){
 	return 1;
       }
 
-  if(sendMessage(todel,s)){perror("send Message"); return 1;}
+  if(send_PackageData(todel,s)){perror("send Message"); return 1;}
   //check the return value from MDS;
   if (read(s,&type,sizeof(type))<0) {
 	perror("read");
@@ -300,7 +253,7 @@ do{  if (write(s,&type,sizeof(type))<0) {
       scanf("%d",&i);
      if(i==2){selectuserto(s,messageList[i].to); //inoltrate to a new user the message;
 	      strcpy(messageList[i].from,user);
-             if(sendMessage(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
+             if(send_PackageData(messageList[i],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
 	            else{printf("MESSAGE SENT SUCESSFULLY\n");
 	              i=4;} }
     if(i==3){if(delateMessage(messageList[i],s))printf("MESSAGE NOT DELATED NETWORK PROBLEM TRY AGAIN\n");
@@ -495,7 +448,7 @@ do{  if (write(s,&type,sizeof(type))<0) {
       scanf("%d",&i);
      if(i==2){selectuserto(s,messageList[i].to); //inoltrate to a new user the message;
 	      strcpy(messageList[i].from,username);
-             if(sendMessage(messageList[(inboxn-i)],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
+             if(send_PackageData(messageList[(inboxn-i)],s))printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
 	            else{printf("MESSAGE SENT SUCESSFULLY\n");
 	            i=4;} }
     if(i==3){if(delateMessage(messageList[(inboxn-i)],s))printf("MESSAGE NOT DELATED NETWORK PROBLEM TRY AGAIN\n");
@@ -589,7 +542,7 @@ int login(userData u, int t,int  s ){
 
 	          if(i==1){
 	            printf("sending your message \n");
-	          if(sendMessage(tosend,s)){
+	          if(send_PackageData(tosend,s)){
               printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
               return 1;}
 	          else{printf("MESSAGE SENT SUCESSFULLY\n");

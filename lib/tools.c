@@ -78,15 +78,56 @@ int hashCode(PackageData tohash){
   }
 
 
-  int sendPackageData(PackageData tosend,int fd){
+  int send_PackageData(PackageData tosend,int fd){
+    int rvalue=1; // the return falue from mds if eevrything as gone fine is 0:
+    //write the type  to MDS
+    if (send_int(tosend.type,fd)<0) {
+	      perror("write");
+	      return 1;}
+    //write  the user from the data is sended    
+     if (send_int(strlen(tosend.from),fd)<0) {
+	      perror("write");
+	      return 1;}
+     
+    if (write(fd,&tosend.from,strlen(tosend.from)+1)<0) {
+	      perror("write");
+	      return 1;}
+    //write the user to the message is sended
+    if (send_int(strlen(tosend.to),fd)<0) {
+	      perror("write");
+	      return 1;}
+    if (write(fd,&tosend.to,strlen(tosend.to)+1)<0) {
+	    perror("write");
+	    return 1;}
+    //write the size of audio data
+    if (send_int(tosend.size,fd)<0) {
+	      perror("write");
+	      return 1;}
+    //write the audioData 
+    if (write(fd,&tosend.message,tosend.size)<0) {
+	      perror("write");
+	      return 1;}
 
+    //write the hash
+    if (send_int(tosend.hash,fd)<0) {
+	      perror("write");
+	      return 1;}
+    //write timestamp
+    if (write(fd,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
+	      perror("write");
+	      return 1;}
+    //check that everything was fine 
+    if (receive_int(&rvalue,fd)<0) {
+	      perror("write");
+	      return 1;}
 
-    return 1;
+    return rvalue;
   }
 
   int recive_PackageData(PackageData *toreciv,int fd){
     int fromLenght;
     int toLenght;
+    int rvalue=0;// value to return in case of success
     toreciv->type=6;
 
     //read the user from the data is sended
@@ -132,6 +173,10 @@ int hashCode(PackageData tohash){
     // if (strcmp(username,tosend.from)==0){
 	 //     perror("sombody is try to send a message as anoter user");
 	 //       return 1;}
+    //check that everything was fine 
+    if (send_int(rvalue,fd)<0) {
+	      perror("write");
+	      return 1;}
    return 0;
 
   }

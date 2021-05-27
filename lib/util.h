@@ -54,5 +54,7 @@ int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]);
 int send_int(int num, int fd);
 //recive an int trought a socket
 int receive_int(int *num, int fd);
+//send a Package data trought a socket
+int send_PackageData(PackageData tosend,int fd);
 //recive a Package data trought a socket
 int recive_PackageData(PackageData *toreciv,int fd);
