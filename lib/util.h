@@ -49,7 +49,10 @@ typedef struct
     char        timestamp[TIMESTAMPS];
 }PackageData; 
 int hashCode(PackageData);//is the hashCode for a package; 
+int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]);
 //send an int trought a socket
 int send_int(int num, int fd);
 //recive an int trought a socket
 int receive_int(int *num, int fd);
+//recive a Package data trought a socket
+int recive_PackageData(PackageData *toreciv,int fd);

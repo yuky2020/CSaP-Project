@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
-#include "util.h"
+#include "../lib/util.h"
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -371,51 +371,12 @@ int storeMessage(PackageData tosend,int vdrs[VDRN]){
 //reciv a message from the client and ask vdr to store it @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
 int ReciveMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
    PackageData 	tosend;//the package to send to recive from client and send to the vdr
-   int fromLenght;
-   int toLenght;
-   tosend.type=6;
-    //read the user from the data is sended
-     if (receive_int(&fromLenght,c)<0) {
-	      perror("recive int ");
-	      return 1;} 
-    if (read(c,&tosend.from,fromLenght+1)<0) {
-         perror("read");
-	      return 1;}    
-    //read the user to the message is sended
-    //frist the lenght
-    if (receive_int(&toLenght,c)<0) {
-	      perror("recive int ");
-	      return 1;}
-    if (read(c,&tosend.to,toLenght+1)<0) {
-	      perror("read");
-	      return 1;}
-    //read the size of audio data
-    if (receive_int(&tosend.size,c)<0) {
-	      perror("read");
-	      return 1;}
-    //read the audioData 
-    if (read(c,&tosend.message,tosend.size)<0) {
-	      perror("read");
-	      return 1;}
+   if(recive_PackageData(&tosend,c)){
+      perror("problem while sending to MDS");
+      return 1;
+   };
 
-    //read the hash
-    if (receive_int(&tosend.hash,c)<0) {
-	      perror("read");
-	      return 1;}
-    //read timestamp
-    if (read(c,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
-	      perror("read");
-	      return 1;}
-    //check if the hash is still valid 
-    printf("%s,%s /n",tosend.to,tosend.from);
-    printf("%d",tosend.hash);
-    if(tosend.hash!=hashCode(tosend)){
-	      perror("hash is different");
-	      return 1;}
-    //check if the username is =to the from ;
-    //if (strcmp(username,tosend.from)==0){
-	 //     perror("sombody is try to send a message as anoter user");
-	 //       return 1;}
+    
 
    printf("Message recived now i store it in the delegated  vdr");
    if (storeMessage(tosend,vdrs))return 1;

@@ -7,7 +7,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <time.h>
-#include"util.h"
+#include"../lib/util.h"
 //function to select a user form addressbook or from all user @param s:socket to MDS,@param *tmp string  to save the user to;
 int  selectuserto(int s,char *tmp){
   int len; //lenght of evry char that is sended;
@@ -135,7 +135,9 @@ int sendMessage(PackageData tosend,int s){
 	      perror("write");
 	      return 1;}
     //write  the user from the data is sended    
-    
+     if (send_int(strlen(tosend.from),s)<0) {
+	      perror("write");
+	      return 1;}
      
     if (write(s,&tosend.from,strlen(tosend.from)+1)<0) {
 	      perror("write");

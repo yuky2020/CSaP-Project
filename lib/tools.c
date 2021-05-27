@@ -78,6 +78,65 @@ int hashCode(PackageData tohash){
   }
 
 
+  int sendPackageData(PackageData tosend,int fd){
+
+
+    return 1;
+  }
+
+  int recive_PackageData(PackageData *toreciv,int fd){
+    int fromLenght;
+    int toLenght;
+    toreciv->type=6;
+
+    //read the user from the data is sended
+     if (receive_int(&fromLenght,fd)<0) {
+	      perror("recive int ");
+	      return 1;} 
+    if (read(fd,&toreciv->from,fromLenght+1)<0) {
+         perror("read");
+	      return 1;}    
+    //read the user to the message is sended
+    //frist the lenght
+    if (receive_int(&toLenght,fd)<0) {
+	      perror("recive int ");
+	      return 1;}
+    if (read(fd,&toreciv->to,toLenght+1)<0) {
+	      perror("read");
+	      return 1;}
+    //read the size of audio data
+    if (receive_int(&toreciv->size,fd)<0) {
+	      perror("read");
+	      return 1;}
+    //read the audioData 
+    if (read(fd,&toreciv->message,toreciv->size)<0) {
+	      perror("read");
+	      return 1;}
+
+    //read the hash
+    if (receive_int(&toreciv->hash,fd)<0) {
+	      perror("read");
+	      return 1;}
+    //read timestamp
+    if (read(fd,&toreciv->timestamp,sizeof(toreciv->timestamp))<0) {
+	      perror("read");
+	      return 1;}
+    //check if the hash is still valid 
+    printf("%s,%s /n",toreciv->to,toreciv->from);
+    printf("%d",toreciv->hash);
+    
+    if(toreciv->hash!=hashCode(*toreciv)){
+	      perror("hash is different");
+	      return 1;}
+    //check if the username is =to the from ;
+    // if (strcmp(username,tosend.from)==0){
+	 //     perror("sombody is try to send a message as anoter user");
+	 //       return 1;}
+   return 0;
+
+  }
+
+
 //compare between two date in asctime format  return 1 if a>b 0 if b=a -1 if a<b using the asci value of number in predeterminated position 
 int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]){
   int ma,mb; //mounth a and b;

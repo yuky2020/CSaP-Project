@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
-#include "util.h"
+#include "../lib/util.h"
 
 //check if a user has ever logged here
 int checkuser(char user[MAXLIMIT]){
