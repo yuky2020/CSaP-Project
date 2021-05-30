@@ -190,9 +190,10 @@ int storetofile(PackageData tostore){
     fclose(fp);
     sprintf(address,"users/%sInbox", tostore.to);
     //check if the file alredy exist and if it is read the number of inbox then close the file
+    printf(" a new message inserted ");
     if ((fp = fopen(address, "rb")))
     {
-     if (fread(&ninbox,sizeof(ninbox),1,fp)<0) {
+     if (fread(&ninbox,sizeof(int),1,fp)<0) {
 	perror("read");
 	return 1;
 	}
@@ -204,7 +205,7 @@ int storetofile(PackageData tostore){
     fp = fopen(address,"wb");
     if(fp == NULL){perror("error opening"); return 1;}
     
-    if (fwrite(&ninbox,sizeof(ninbox),1,fp)<0) {
+    if (fwrite(&ninbox,sizeof(int),1,fp)<0) {
 	perror("write");
 	return 1;
 	}

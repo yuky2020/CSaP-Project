@@ -477,37 +477,37 @@ int login(userData u, int t,int  s ){
   int len;
   u.type=t; 
   //wirte in the socket data for login or register
-  if (write(s,&t,sizeof(int))<0) {
+  if (send_int(t,s)<0) {
 	    perror("write");
 	    exit(1);
       }
   //read the len of the username     
   len=strlen(u.username);
   //send  to the socket the len 
-  if (write(s,&len,sizeof(int))<0) {
+  if (send_int(len,s)<0) {
 	    perror("write");
 	    exit(1);
       }
   //send the username to the socket ad one for the endian 
-  if (write(s,&u.username,len+1)<0) {
+  if (write(s,u.username,len+1)<0) {
 	    perror("write");
 	    exit(1);
       }
   //read the len of the password     
   len=strlen(u.password);
   //send  to the socket the len 
-  if (write(s,&len,sizeof(int))<0) {
+  if (send_int(len,s)<0) {
 	    perror("write");
 	    exit(1);
       }
   //send the password to the socket ad one for the endian 
-  if (write(s,&u.password,len+1)<0) {
+  if (write(s,u.password,len+1)<0) {
 	    perror("write");
 	    exit(1);
       }
 
   // Read  from socket 1 for login or register done 0 for not 
-  if (read(s,&t,sizeof(int))<0) {
+  if (receive_int(&t,s)<0) {
 	perror("read");
 	exit(1); }
 
@@ -531,6 +531,7 @@ int login(userData u, int t,int  s ){
         tosend.message=messagetosend;
         tosend.size=sizeof(tosend.message);
 	      tosend.hash=hashCode(tosend);
+        printf("%d",tosend.hash);
         tosend.type=6;
         do{ printf("1) send the message\n");
 	          printf("2) listen the message before send it\n");

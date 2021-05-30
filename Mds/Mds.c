@@ -297,7 +297,7 @@ int putalluser(int c ){
 int storeMessage(PackageData tosend,int vdrs[VDRN]){
    sem_t 	*sem;//semaphore for lock the vdr while used
    int 		vdrToIndex;//the index of the vdr of the to username;
-   int          vdrReturn;//the final return value from vdr;
+   int          vdrReturn=0;//the final return value from vdr;
    //check which is the vdr for the to user ;
    vdrToIndex=getvdrIndex(tosend.to,vdrs);
    //now open and lock the semaphore 
@@ -313,21 +313,23 @@ int storeMessage(PackageData tosend,int vdrs[VDRN]){
    //when we send the type we also trigger the vdr to save the data;
    if(send_PackageData(tosend,vdrs[vdrToIndex])){
       perror("error sending data");
-      return 1;
+      goto fine ;
    }
    
+  
+      
+   if (receive_int(&vdrReturn,vdrs[vdrToIndex])<0) {
+	   perror("read");
+	   vdrReturn=0;}
+   
+fine: 
    sem_post(sem);//unlock the semaphore "incresing the  counter"
    if (sem_close(sem) < 0){
       perror("sem_close failed");
       exit(0);}
-      
-   if (receive_int(&vdrReturn,vdrs[vdrToIndex])<0) {
-	perror("read");
-	return 1;}
-   //then return 0 if everything goes fine
-    if(vdrReturn==1)return 0;
-    return 1;
-
+   //then return 0 if everything goes fine   
+   if(vdrReturn==1)return 0;
+   return 1;
 }
 
 //reciv a message from the client and ask vdr to store it @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
@@ -572,22 +574,23 @@ void dowork(int c,int vdrs[VDRN])
     //read from Stream Socket
     do{
     //read the type of the request    
-    if (read (c, &afantasticuser.type, sizeof (int)) < 0) {
-	   perror ("read");
-	   exit (1);
-      }
+    if (receive_int(&afantasticuser.type,c) < 0) {
+	      perror ("read");
+	      exit (1);
+       }
     //get the len of the username   
-    if (read (c, &len, sizeof (int)) < 0) {
-	   perror ("read");
-	   exit (1);
+    if (receive_int (&len,c) < 0) {
+	      perror ("read");
+	      exit (1);
       } 
     //get the username   
     if (read (c, &afantasticuser.username,len+1) < 0) {
 	   perror ("read");
 	   exit (1);
-      }   
+      }
+      afantasticuser.username[len] = '\0';//add termination;   
      //get the len of password 
-    if (read (c, &len, sizeof (int)) < 0) {
+    if (receive_int(&len,c) < 0) {
 	   perror ("read");
 	   exit (1);
       } 
@@ -596,14 +599,14 @@ void dowork(int c,int vdrs[VDRN])
 	   perror ("read");
 	   exit (1);
       }   
-
+      afantasticuser.password[len] = '\0';//add termination;  
     
    if(afantasticuser.type==1)result=autenticate(afantasticuser);
    else{if(afantasticuser.type==2)result=registeru(afantasticuser);else{ perror("Malformetted data from client(security allert: attack with a row socket is plausible )");
          exit(1);} }
 
     //write result to the stream
-    if (write (c,&result, sizeof (int)) < 0) {
+    if (send_int(result,c) < 0) {
 	   perror ("write");
 	   exit (1);
 

@@ -65,21 +65,19 @@ int receive_int(int *num, int fd)
 
 
 //function that give an int32 value from a PackageData the return is int32 insted of long or Byte(i dont use hard coded algorithhm like sha )  for be more light 
-int hashCode(PackageData tohash){
-  return 0;
+int32_t hashCode(PackageData tohash){
 
-  /*int32_t i,ret;//return value
+  int32_t i,ret;//return value
   for(i=0;i<strlen(tohash.from);i++){
     ret=ret+((int)tohash.from[i]+33*(int)tohash.to[i]);}//33 is the famus magic number
-    ret=ret+tohash.size;
-  for(i=0;i<TIMESTAMPS;i++)ret=ret+((int)tohash.timestamp[i]);
+    ret=ret+tohash.message.maxFrameIndex;
+  for(i=0;i<strlen(tohash.timestamp);i++)ret=ret+((int)tohash.timestamp[i]);
   return ret;
-*/
   }
 
 
   int send_PackageData(PackageData tosend,int fd){
-    int rvalue=1; // the return falue from mds if eevrything as gone fine is 0:
+    int rvalue=0; // the return falue from mds if eevrything as gone fine is 0:
     //write the type  to MDS
     if (send_int(tosend.type,fd)<0) {
 	      perror("write");
@@ -104,15 +102,31 @@ int hashCode(PackageData tohash){
 	      perror("write");
 	      return 1;}
     //write the audioData 
-    if (write(fd,&tosend.message,tosend.size)<0) {
+    /*if (write(fd,&tosend.message,tosend.size)<0) {
 	      perror("write");
 	      return 1;}
+    */
+   if(send_int(tosend.message.frameIndex,fd)<0){
+     perror("write");
+     return 1;}
+   if(send_int(tosend.message.maxFrameIndex,fd)<0){
+     perror("write");
+     return 1;} 
+    for(int i=0;i<(tosend.message.maxFrameIndex/1024);i++){
+        if (write(fd,&tosend.message.recordedSamples[i],sizeof(SAMPLE))<0) {
+	        perror("write");
+	        return 1;}
 
+    }
+   
     //write the hash
     if (send_int(tosend.hash,fd)<0) {
 	      perror("write");
 	      return 1;}
     //write timestamp
+    if (send_int(strlen(tosend.timestamp),fd)<0) {
+	      perror("write");
+	      return 1;}
     if (write(fd,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
 	      perror("write");
 	      return 1;}
@@ -127,6 +141,7 @@ int hashCode(PackageData tohash){
   int recive_PackageData(PackageData *toreciv,int fd){
     int fromLenght;
     int toLenght;
+    int timestampL;//lenght of the timestamp
     int rvalue=0;// value to return in case of success
     toreciv->type=6;
 
@@ -137,6 +152,7 @@ int hashCode(PackageData tohash){
     if (read(fd,&toreciv->from,fromLenght+1)<0) {
          perror("read");
 	      return 1;}    
+    toreciv->from[fromLenght] = '\0';  /* Terminate the string! */    
     //read the user to the message is sended
     //frist the lenght
     if (receive_int(&toLenght,fd)<0) {
@@ -145,23 +161,43 @@ int hashCode(PackageData tohash){
     if (read(fd,&toreciv->to,toLenght+1)<0) {
 	      perror("read");
 	      return 1;}
+    toreciv->to[toLenght] = '\0';  /* Terminate the string! */      
     //read the size of audio data
     if (receive_int(&toreciv->size,fd)<0) {
 	      perror("read");
 	      return 1;}
     //read the audioData 
-    if (read(fd,&toreciv->message,toreciv->size)<0) {
+    /*if (read(fd,&toreciv->message,toreciv->size)<0) {
 	      perror("read");
 	      return 1;}
+    */
+     if(receive_int(&toreciv->message.frameIndex,fd)<0){
+     perror("read");
+     return 1;}
+   if(receive_int(&toreciv->message.maxFrameIndex,fd)<0){
+     perror("read");
+     return 1;}
+     toreciv->message.recordedSamples=malloc(toreciv->message.maxFrameIndex/1024*sizeof(float)); 
+    for(int i=0;i<(toreciv->message.maxFrameIndex/1024);i++){
+        if (read(fd,&toreciv->message.recordedSamples[i],sizeof(SAMPLE))<0) {
+	        perror("read");
+	        return 1;}
+
+    }    
 
     //read the hash
     if (receive_int(&toreciv->hash,fd)<0) {
 	      perror("read");
 	      return 1;}
     //read timestamp
-    if (read(fd,&toreciv->timestamp,sizeof(toreciv->timestamp))<0) {
+    if (receive_int(&timestampL,fd)<0) {
 	      perror("read");
 	      return 1;}
+    if (read(fd,&toreciv->timestamp,sizeof(timestampL)+1)<0) {
+	      perror("read");
+	      return 1;}
+    toreciv->timestamp[timestampL] = '\0';  /* Terminate the string! */    
+
     //check if the hash is still valid 
     printf("%s,%s /n",toreciv->to,toreciv->from);
     printf("%d",toreciv->hash);
@@ -177,6 +213,7 @@ int hashCode(PackageData tohash){
     if (send_int(rvalue,fd)<0) {
 	      perror("write");
 	      return 1;}
+   printf("Message sended");     
    return 0;
 
   }

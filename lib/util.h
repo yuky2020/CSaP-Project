@@ -45,7 +45,7 @@ typedef struct
     char        to[MAXLIMIT];
     int         size; //size of the message ;
     AudioDataf  message;
-    int         hash;
+    int32_t         hash;
     char        timestamp[TIMESTAMPS];
 }PackageData; 
 int hashCode(PackageData);//is the hashCode for a package; 
