@@ -346,7 +346,7 @@ int ReciveMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
 //send a message to the vdr for store it
 
 //function to send all message destinated to a user; to that user;
-int  getClientMessage(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c){
+int  getClientMessages(char username[MAXLIMIT],int vdrIndex,int vdrs[VDRN],int c){
    int vdrToType=8;//vdr type for this operation
    int vdrRet,clientRet;//return value from vdr;and client 
    int inboxN=giveInbox(username,vdrIndex,vdrs);//number of message to read;
@@ -626,69 +626,64 @@ void dowork(int c,int vdrs[VDRN])
     
 
     do{
+        type=0;
         if (receive_int(&type,c) < 0) {
 	         perror ("read type");
 	         exit (1);
 	         }
-	 switch (type) {
-	 	case 7: //if the type is 7 client want the number of inbox message  ;
-		   {int inbox=0;
-		     inbox=giveInbox(afantasticuser.username,vdrIndex,vdrs);//this function return the number of inbox Audio message of a user;
-		     if (send_int(inbox,c) < 0) {
-			      perror ("write");
-			      exit (1);
-           }
-          break;
-		   }
-		case 6:// if the type is 6 client want to send a message to another user;
-		   {int isSended=ReciveMessage(afantasticuser.username,vdrs,c);
-		     if (send_int(isSended,c) < 0) {
-			      perror ("write");
-			      exit (1);
-			      }
-         break;
-		   }	
+         else{
+	 
+	 	      if(type==7) //if the type is 7 client want the number of inbox message  ;
+		         {int inbox=0;
+		         inbox=giveInbox(afantasticuser.username,vdrIndex,vdrs);//this function return the number of inbox Audio message of a user;
+		         if (send_int(inbox,c) < 0) {
+			            perror ("write");
+			            exit (1);
+               }}
+		   
+		      if(type==6)// if the type is 6 client want to send a message to another user;
+		         {if(ReciveMessage(afantasticuser.username,vdrs,c))
+               {perror("problem while reciving the message");}
+                type=6;}
+         
+		   	
 	 		
-	   case 8://if the type of the call is 8 the client is asking for is messages;
-		   {int isDone=0;
-		    //function return 1 if there is a problem
-		    if(getClientMessage(afantasticuser.username,vdrIndex,vdrs,c)){perror("client recive wrong message");
-                       isDone=1;}
-		    if (write (c,&isDone, sizeof (int)) < 0) {
-			perror ("write");
-			exit (1);
-			}
-         break;
-		   }
-	       	
-	   case 9://if the type of call is 9 you are asking for all user;
-		   { 
-		      if(putalluser(c)){perror("cant send users to client ");}
-            break;
-		   }
-
-	   case 10://if the type of call is 10 you are asking for a delate from vdr;
-		      {int isDel=0;
-		      if(delatefromvdr(afantasticuser.username,vdrs,vdrIndex,c))
-			      {perror("cant send users to client ");
-			      isDel=1;}
-		      //write the result to the socket 0 for success 1 for error
-			   if (write (c,&isDel, sizeof (int)) < 0) {
+	         if(type==8)//if the type of the call is 8 the client is asking for is messages;
+		         {int isDone=0;
+		         //function return 1 if there is a problem
+		         if(getClientMessages(afantasticuser.username,vdrIndex,vdrs,c)){perror("client recive wrong message");
+                            isDone=1;}
+		         if (write (c,&isDone, sizeof (int)) < 0) {
 			      perror ("write");
 			      exit (1);
-			      }
-               break;
-		         }
+			      }}
+		   
+	       	
+	         if(type==9)//if the type of call is 9 you are asking for all user;
+		         { 
+		            if(putalluser(c)){perror("cant send users to client ");}
+               }
+         
+	         if(type==10)//if the type of call is 10 you are asking for a delate from vdr;
+		            {int isDel=0;
+		            if(delatefromvdr(afantasticuser.username,vdrs,vdrIndex,c))
+			            {perror("cant send users to client ");
+			            isDel=1;}
+		            //write the result to the socket 0 for success 1 for error
+			         if (write (c,&isDel, sizeof (int)) < 0) {
+			            perror ("write");
+			            exit (1);
+                  }}
+		         
+	   
+            if(type==5)printf("CHILD-CLOSE  REQUESTED");
 
-	   case 5:{printf("CHILD-CLOSE  REQUESTED");break;}
-
-	 	default:
-		      {perror("Malicius client is plausible now i kill this child");
-		      type=5;}
-            break;           
-	 }
-
-
+	 	      if(type!=0 &&(type<5||type>10))
+            {perror("Malicius client is plausible now i kill this child");
+               printf("%d",type);
+		            type=5;}
+            }
+            
     }while(type!=5);//type 5 close the connection with the client  //can be used only when the client want do disconect 
 
 

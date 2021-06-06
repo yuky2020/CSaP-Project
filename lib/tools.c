@@ -69,9 +69,8 @@ int32_t hashCode(PackageData tohash){
 
   int32_t i,ret;//return value
   for(i=0;i<strlen(tohash.from);i++){
-    ret=ret+((int)tohash.from[i]+33*(int)tohash.to[i]);}//33 is the famus magic number
+    ret=ret+((int)tohash.from[i]+3*(int)tohash.to[i]);}//33 is the famus magic number
     ret=ret+tohash.message.maxFrameIndex;
-  for(i=0;i<strlen(tohash.timestamp);i++)ret=ret+((int)tohash.timestamp[i]);
   return ret;
   }
 
@@ -87,14 +86,14 @@ int32_t hashCode(PackageData tohash){
 	      perror("write");
 	      return 1;}
      
-    if (write(fd,&tosend.from,strlen(tosend.from)+1)<0) {
+    if (write(fd,tosend.from,strlen(tosend.from)+1)<0) {
 	      perror("write");
 	      return 1;}
     //write the user to the message is sended
     if (send_int(strlen(tosend.to),fd)<0) {
 	      perror("write");
 	      return 1;}
-    if (write(fd,&tosend.to,strlen(tosend.to)+1)<0) {
+    if (write(fd,tosend.to,strlen(tosend.to)+1)<0) {
 	    perror("write");
 	    return 1;}
     //write the size of audio data
@@ -109,9 +108,11 @@ int32_t hashCode(PackageData tohash){
    if(send_int(tosend.message.frameIndex,fd)<0){
      perror("write");
      return 1;}
-   if(send_int(tosend.message.maxFrameIndex,fd)<0){
+   //saing sapce is always a good idea  
+   if(send_int(tosend.message.maxFrameIndex/1024,fd)<0){
      perror("write");
      return 1;} 
+
     for(int i=0;i<(tosend.message.maxFrameIndex/1024);i++){
         if (write(fd,&tosend.message.recordedSamples[i],sizeof(SAMPLE))<0) {
 	        perror("write");
@@ -127,7 +128,7 @@ int32_t hashCode(PackageData tohash){
     if (send_int(strlen(tosend.timestamp),fd)<0) {
 	      perror("write");
 	      return 1;}
-    if (write(fd,&tosend.timestamp,sizeof(tosend.timestamp))<0) {
+    if (write(fd,tosend.timestamp,strlen(tosend.timestamp)+1)<0) {
 	      perror("write");
 	      return 1;}
     //check that everything was fine 
@@ -177,8 +178,8 @@ int32_t hashCode(PackageData tohash){
    if(receive_int(&toreciv->message.maxFrameIndex,fd)<0){
      perror("read");
      return 1;}
-     toreciv->message.recordedSamples=malloc(toreciv->message.maxFrameIndex/1024*sizeof(float)); 
-    for(int i=0;i<(toreciv->message.maxFrameIndex/1024);i++){
+     toreciv->message.recordedSamples=malloc(toreciv->message.maxFrameIndex*sizeof(float)); 
+    for(int i=0;i<(toreciv->message.maxFrameIndex);i++){
         if (read(fd,&toreciv->message.recordedSamples[i],sizeof(SAMPLE))<0) {
 	        perror("read");
 	        return 1;}
@@ -193,20 +194,20 @@ int32_t hashCode(PackageData tohash){
     if (receive_int(&timestampL,fd)<0) {
 	      perror("read");
 	      return 1;}
-    if (read(fd,&toreciv->timestamp,sizeof(timestampL)+1)<0) {
+    if (read(fd,&toreciv->timestamp,timestampL+1)<0) {
 	      perror("read");
 	      return 1;}
     toreciv->timestamp[timestampL] = '\0';  /* Terminate the string! */    
 
     //check if the hash is still valid 
-    printf("%s,%s /n",toreciv->to,toreciv->from);
+    printf("%s,%s\n",toreciv->to,toreciv->from);
     printf("%d",toreciv->hash);
-    
+    toreciv->message.maxFrameIndex=toreciv->message.maxFrameIndex*1024;
     if(toreciv->hash!=hashCode(*toreciv)){
 	      perror("hash is different");
 	      return 1;}
     //check if the username is =to the from ;
-    // if (strcmp(username,tosend.from)==0){
+    //if (strcmp(username,tosend.from)==0){
 	 //     perror("sombody is try to send a message as anoter user");
 	 //       return 1;}
     //check that everything was fine 

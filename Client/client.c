@@ -71,6 +71,7 @@ int  selectuserto(int s,char *tmp){
         if (read(s,usernamesist[k],len+1)<0) {
 	        perror("read");
 	        return 1;}
+          usernamesist[k][len] = '\0';  /* Terminate the string! */  
        printf("%d  %s\n",(k+1),usernamesist[k]);
         
       
@@ -537,19 +538,19 @@ int login(userData u, int t,int  s ){
 	          printf("2) listen the message before send it\n");
 	          printf("3) to return to the main menu\n");
 	          printf("4)change the destinatary user actualy is: %s \n",tosend.to);
-            printf("5)go back to main menu ");
+            printf("5)go back to main menu \n");
 	          scanf("%d",&i);
 
 
 	          if(i==1){
 	            printf("sending your message \n");
-	          if(send_PackageData(tosend,s)){
-              printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
-              return 1;}
-	          else{printf("MESSAGE SENT SUCESSFULLY\n");
-                 printf("1)inoltrate this massage to another user\n");
-		             printf("2)go back to the main menu\n");
-		             scanf("%d",&i);
+	            if(send_PackageData(tosend,s)){
+                printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n");//sendMessage return 1 upon fail
+                return 1;}
+	            else{printf("MESSAGE SENT SUCESSFULLY\n");
+              printf("1)inoltrate this massage to another user\n");
+		          printf("2)go back to the main menu\n");
+		          scanf("%d",&i);
 		             i=i+3;//smart move in this way if you have pressed 2 you go back and if you press 1 you inoltrate the message
                 }
             }
@@ -671,29 +672,31 @@ do{
 	 
       {if(sendNew(afantastic.username,s))perror("network problem with MDS");
        else printf("message sent");
-       break; 
+       
       }//close case 2;
+      break;
     case 3:{
-	     if(addusertoadressbook(s)){perror("Error,Try Again");}
+	     if(addusertoadressbook(s)){perror("Error,Try Again");}}
        break;
-	   }
+	   
   
-    case 4:{
+    case 4:
 	     serchMessages(afantastic.username,s);
        break;
-	   }	   
+	   	   
 
      case 5:{
        printf("hidden option to test micrphone");
 	     AudioDataf a;
        a= recordP();
-       playback(a);
+       playback(a);}
        break;
-	   }	   
+	   
     	
-    case 9:{if(disconnect(s)){printf("error in disconection try again");i=5; }//disconnect from the mds return 1 in case of error
-            break;
-            }    
+    case 9:
+          if(disconnect(s)){printf("error in disconection try again");i=5; }//disconnect from the mds return 1 in case of error
+          break;
+                
     default: printf("This option is not avaible \n"); 
         
     }
