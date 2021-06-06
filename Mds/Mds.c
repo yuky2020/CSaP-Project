@@ -87,7 +87,7 @@ int getvdrIndex(char username[MAXLIMIT],int vdrs[VDRN] ){
 	    if (write(vdrs[i],username,len+1)<0) {
 		  perror("write");
 		  exit(1);}
-	    //sleep(100);//give time to recive data and send the response from the i-th vdr process,not useful removed 
+	    //sleep(1);//give time to recive data and send the response from the i-th vdr process,not useful removed 
             //read the result from actual vdr
 	    if (receive_int(&retvdr,vdrs[i])<0) {
 	      perror("read");
@@ -676,7 +676,7 @@ void dowork(int c,int vdrs[VDRN])
                   }}
 		         
 	   
-            if(type==5)printf("CHILD-CLOSE  REQUESTED");
+            if(type==5)printf("CHILD-CLOSE USER-LOGOUT  REQUESTED");
 
 	 	      if(type!=0 &&(type<5||type>10))
             {perror("Malicius client is plausible now i kill this child");

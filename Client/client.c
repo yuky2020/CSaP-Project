@@ -122,9 +122,9 @@ int checkinbox(int s){
 //write in  the socket type=5,so Mds whill close child process;
 int disconnect(int s){
   int type=5;
-  if (write(s,&type,sizeof(type))<0) {
-	perror("write");
-	return 0;}
+  if (send_int(type,s)<0) {
+	  perror("write");
+	  return 0;}
   return 1;
 
 }

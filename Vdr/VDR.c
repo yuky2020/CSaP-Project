@@ -413,89 +413,91 @@ do{
 	perror("write");
 	exit(1);
     }
-    //type 1 for echo
-    if(type==1){
-    // Read (or recv) from socket
-    printf("echo call from Mds \n");
-    //return the same value 1 for notifing that the Vdr is online ;
-    if (send_int(type,s)<0) {
-	perror("write");
-	exit(1);
+    else{
+        //type 1 for echo
+        if(type==1){
+        // Read (or recv) from socket
+        printf("echo call from Mds \n");
+        //return the same value 1 for notifing that the Vdr is online ;
+        if (send_int(type,s)<0) {
+	        perror("write");
+	        exit(1);
 	}}
-    //type six for message to store
-    if(type==6){ 
-	//set socret=1 for returning it to the MDS
-	socret=1;
-	//if the file is not stored set socret=0
-	if(storeMessage(s))socret=0;
-	//write socret in the socket
-        if (send_int(socret,s)<0) {
-	        perror("send");
-	        exit(1);}
+        //type six for message to store
+        if(type==6){ 
+	        //set socret=1 for returning it to the MDS
+	        socret=1;
+	        //if the file is not stored set socret=0
+	        if(storeMessage(s))socret=0;
+	        //write socret in the socket
+                if (send_int(socret,s)<0) {
+	                perror("send");
+	                exit(1);}
         }
-    //type seven for get ninbox
-    if(type==7){
-	char user[MAXLIMIT];
-        int len;
-        //read the len of the user you are about to recive
-         if (receive_int(&len,s)<0) {
-	perror("read");
-	exit(1);}
-	//read the username to search inbox;
-        if (read(s,user,len+1)<0) {
-	perror("read");
-	exit(1);}
-        //socret= ninbox is 0 either if the file with ninbox dosen't esist or if ninbox=0;
-	socret=getinbox(user);
-        //return socret to the socket
-        if (send_int(socret,s)<0) {
-	perror("write");
-	exit(1);}
+        //type seven for get ninbox
+        if(type==7){
+	        char user[MAXLIMIT];
+                int len;
+                //read the len of the user you are about to recive
+                if (receive_int(&len,s)<0) {
+	        perror("read");
+	        exit(1);}
+	        //read the username to search inbox;
+                if (read(s,user,len+1)<0) {
+	        perror("read");
+	        exit(1);}
+                user[len] = '\0';
+                //socret= ninbox is 0 either if the file with ninbox dosen't esist or if ninbox=0;
+	        socret=getinbox(user);
+                //return socret to the socket
+                if (send_int(socret,s)<0) {
+	        perror("write");
+	        exit(1);}
        }
-   //type 8 for get all the message from a user sending it one to one to avoid huge package  
-    if(type==8){
-      	char user[MAXLIMIT];
-	//read the username to search Audiodata;
-        if (read(s,&user,sizeof(user))<0) {
-	perror("read");
-	exit(1);}
-       //return 0 if there is an error and 1 if everything has gone fine       //return 0 if there is an error and 1 if everything has gone fine  
-       if(!readandsendMessages(user,s)){perror("cant send message"); exit(1);}
+        //type 8 for get all the message from a user sending it one to one to avoid huge package  
+        if(type==8){
+      	        char user[MAXLIMIT];
+	        //read the username to search Audiodata;
+                if (read(s,&user,sizeof(user))<0) {
+	        perror("read");
+	        exit(1);}
+                //return 0 if there is an error and 1 if everything has gone fine       //return 0 if there is an error and 1 if everything has gone fine  
+                if(!readandsendMessages(user,s)){perror("cant send message"); exit(1);}
 
 	}
-    //type 9 is for check if the user was ever register in this vdr;
-    if(type==9){
-	char user[MAXLIMIT];
-        int len;
-	//read the username to search inbox;
-        if (receive_int(&len,s)<0) {
-	perror("read");
-	exit(1);}
-        if(read(s,user,len+1)<0){
+        //type 9 is for check if the user was ever register in this vdr;
+        if(type==9){
+	        char user[MAXLIMIT];
+                int len;
+	        //read the username to search inbox;
+                if (receive_int(&len,s)<0) {
+	        perror("read");
+	        exit(1);}
+                if(read(s,user,len+1)<0){
                 perror("read");
                 exit(1);
+                }
+                printf("Im chek if %s is here \n",user );
+                //socret= return 0 if the file with ninbox dosen't esist 1 else ;
+	        socret=checkuser(user);
+                //return socret to the socket
+                if (send_int(socret,s)<0) {
+	        perror("write");
+	        exit(1);}
         }
-        printf("Im chek if %s is here \n",user );
-        //socret= return 0 if the file with ninbox dosen't esist 1 else ;
-	socret=checkuser(user);
-        //return socret to the socket
-        if (send_int(socret,s)<0) {
-	perror("write");
-	exit(1);}
-    }
-   //type 10 to delate a message;	
-    if(type==10){
-	//set socret=1 for returning it to the MDS
-	socret=1;
-	//if the file is not stored set socret=0
-	if(delateMessage(s))socret=0;
-	//write socret in the socket
-        if (write(s,&socret,sizeof(socret))<0) {
-	perror("write");
-	exit(1);}
-    }
+        //type 10 to delate a message;	
+        if(type==10){
+	        //set socret=1 for returning it to the MDS
+	        socret=1;
+	        //if the file is not stored set socret=0
+	        if(delateMessage(s))socret=0;
+	        //write socret in the socket
+                if (write(s,&socret,sizeof(socret))<0) {
+	        perror("write");
+	        exit(1);}
+        }
 
-     
+    }
     
 
     
