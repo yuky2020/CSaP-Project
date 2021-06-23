@@ -4,6 +4,8 @@
 **/
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #define ADDRESSBOOKLIMIT 200
 #define MAXLIMIT    20 //limit for username and Password
 #define FRAMESIZE   1024//size of a audio Frame 
@@ -58,3 +60,5 @@ int receive_int(int *num, int fd);
 int send_PackageData(PackageData tosend,int fd);
 //recive a Package data trought a socket
 int recive_PackageData(PackageData *toreciv,int fd);
+//save a package data on a file 
+int store_PackageData(PackageData  tostore,FILE  *fp );

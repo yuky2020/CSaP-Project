@@ -31,10 +31,11 @@ int getinbox(char user[MAXLIMIT]){
      if (fread(&ninbox,sizeof(int),1,fp)<0) {
 	perror("read");
 	return 0;
-	}else{perror("not found ");}
-        printf("%d",ninbox);   
-        }else{printf("user not found %s",user);
-        fclose(fp);}
+	}
+        printf("%d",ninbox);
+        fclose(fp);   
+        }else{printf("user not found %s",user);}
+   
    return ninbox;
 }
 //function to return the message stored in a file by is username 
@@ -150,45 +151,9 @@ int storetofile(PackageData tostore){
     fp = fopen(address,"ab");
     if(fp == NULL){perror("error open");
 		    return 1;}
-        printf("wirte a messagge on the disk");
-        //write the PackageData to the file and serialize it 
-        if (fwrite(&tostore.type,sizeof(tostore.type),1,fp)<0) { 
-	perror("write f");
-	return 1;
-	}
-        //write the from user to file
-        if (fwrite(&tostore.from,sizeof(tostore.from),1,fp)<0) { 
-	perror("write f");
-	return 1;
-	}
-	//write the to user to file 
-        if (fwrite(&tostore.to,sizeof(tostore.to),1,fp)<0) { 
-	perror("write f");
-	return 1;
-	}
-	//write the size of AudioDataf
-        if (fwrite(&tostore.size,sizeof(tostore.size),1,fp)<0) { 
-	perror("write f");
-	return 1;
-	}
-	//write audioDataf
-        if (fwrite(&tostore.message,tostore.size,1,fp)<0) { 
-	perror("write f");
-	return 1;
-	}
-	//write the hash
-
-        if (fwrite(&tostore.hash,sizeof(tostore.hash),1,fp)<0) { 
-	perror("write f");
-	return 1;
-	}
-	//write the timestamp
-        if (fwrite(&tostore.timestamp,sizeof(tostore.timestamp),1,fp)<0) { 
-	perror("write f");
-	return 1;
-	}
-
-
+    printf("wirte a messagge on the disk");
+    //store the package data
+    store_PackageData(tostore,fp);
     fclose(fp);
     printf("ready to write on inbox file ");
     sprintf(address,"users/%sInbox", tostore.to);

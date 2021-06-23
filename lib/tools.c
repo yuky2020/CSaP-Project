@@ -220,6 +220,76 @@ int32_t hashCode(PackageData tohash){
   }
 
 
+  int store_PackageData(PackageData tostore, FILE* fp){
+      int tolen,fromlen,timelen;
+      tolen=strlen(tostore.to);
+      fromlen=strlen(tostore.from);
+      timelen=strlen(tostore.timestamp);
+      //write the PackageData to the file and serialize it 
+        if (fwrite(&tostore.type,sizeof(int),1,fp)<0) { 
+	      perror("write f");
+	      return 1;
+	      }
+        if (fwrite(&fromlen,sizeof(int),1,fp)<0) { 
+	      perror("write f");
+	      return 1;
+	      }
+        //write the from user to file
+        if (fwrite(&tostore.from,fromlen+1,1,fp)<0) { 
+	      perror("write f");
+      	return 1;
+	      }
+
+        if (fwrite(&tolen,sizeof(int),1,fp)<0) { 
+	      perror("write f");
+	      return 1;
+	      }        
+      	//write the to user to file 
+        if (fwrite(&tostore.to,tolen+1,1,fp)<0) { 
+	      perror("write f");
+	      return 1;
+	      }
+      	//write the size of AudioDataf
+        if (fwrite(&tostore.size,sizeof(int),1,fp)<0) { 
+	      perror("write f");
+      	return 1;
+	      }
+	      //write audioDataf
+        if(fwrite(&tostore.message.frameIndex,sizeof(int),1,fp)<0){
+          perror("write f");
+          return 1;}
+        //sll frame is important   
+        if(fwrite(&(tostore.message.maxFrameIndex),sizeof(int),1,fp)<0){
+        perror("write f");
+        return 1;} 
+
+        for(int i=0;i<(tostore.message.maxFrameIndex/1024);i++){
+          if (fwrite(&tostore.message.recordedSamples[i],sizeof(SAMPLE),1,fp)<0) {
+	          perror("write f");
+	          return 1;}
+        }
+      	//write the hash
+        if (fwrite(&tostore.hash,sizeof(int),1,fp)<0) { 
+	      perror("write f");
+      	return 1;
+	      }
+         if (fwrite(&timelen,sizeof(int),1,fp)<0) { 
+	      perror("write f");
+	      return 1;
+	      }
+	      //write the timestamp
+        if (fwrite(&tostore.timestamp,sizeof(int),1,fp)<0) { 
+        	perror("write f");
+	        return 1;
+	      }
+
+    
+   
+   
+
+  }
+
+
 //compare between two date in asctime format  return 1 if a>b 0 if b=a -1 if a<b using the asci value of number in predeterminated position 
 int datecmp(char a[TIMESTAMPS],char b[TIMESTAMPS]){
   int ma,mb; //mounth a and b;
