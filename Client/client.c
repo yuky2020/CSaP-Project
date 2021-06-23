@@ -124,8 +124,8 @@ int disconnect(int s){
   int type=5;
   if (send_int(type,s)<0) {
 	  perror("write");
-	  return 0;}
-  return 1;
+	  return 1;}
+  return 0;
 
 }
 //Function to send a message to MDS @Param PackageData:Struct that contains the message,and other value see util.h @Param s socket conected  to MDS
@@ -654,9 +654,10 @@ do{ if(t==0){printf("1)Login\n");
         }while(t==0);
 
 printf("Welcome Back %s \n",afantastic.username );
-int i;
+int i,ninbox;
 do{
-  printf("%d inbox messages for you \n",checkinbox(s)); //removed for testing reason could couse problem
+  ninbox= checkinbox(s);
+  printf("%d inbox messages for you \n",ninbox); //removed for testing reason could couse problem
   printf("1) show the new messages \n");
   printf("2) send a new message \n");
   printf("3) add new contact in the address book \n");

@@ -24,17 +24,17 @@ int getinbox(char user[MAXLIMIT]){
    FILE *fp;
    // save the address of the file the name is the usename of the reciver 
    char address[(MAXLIMIT+11)] = {'\0'};
-
    sprintf(address,"users/%sInbox",user);
    //check if the file  exist and if it is read the number of inbox then close the file
    if ((fp = fopen(address, "rb")))
     {
-     if (fread(&ninbox,sizeof(ninbox),1,fp)<0) {
+     if (fread(&ninbox,sizeof(int),1,fp)<0) {
 	perror("read");
 	return 0;
-	}
-   fclose(fp);}
-
+	}else{perror("not found ");}
+        printf("%d",ninbox);   
+        }else{printf("user not found %s",user);
+        fclose(fp);}
    return ninbox;
 }
 //function to return the message stored in a file by is username 
@@ -150,44 +150,47 @@ int storetofile(PackageData tostore){
     fp = fopen(address,"ab");
     if(fp == NULL){perror("error open");
 		    return 1;}
+        printf("wirte a messagge on the disk");
         //write the PackageData to the file and serialize it 
         if (fwrite(&tostore.type,sizeof(tostore.type),1,fp)<0) { 
-	perror("write");
+	perror("write f");
 	return 1;
 	}
         //write the from user to file
         if (fwrite(&tostore.from,sizeof(tostore.from),1,fp)<0) { 
-	perror("write");
+	perror("write f");
 	return 1;
 	}
 	//write the to user to file 
         if (fwrite(&tostore.to,sizeof(tostore.to),1,fp)<0) { 
-	perror("write");
+	perror("write f");
 	return 1;
 	}
 	//write the size of AudioDataf
         if (fwrite(&tostore.size,sizeof(tostore.size),1,fp)<0) { 
-	perror("write");
+	perror("write f");
 	return 1;
 	}
 	//write audioDataf
         if (fwrite(&tostore.message,tostore.size,1,fp)<0) { 
-	perror("write");
+	perror("write f");
 	return 1;
 	}
 	//write the hash
 
         if (fwrite(&tostore.hash,sizeof(tostore.hash),1,fp)<0) { 
-	perror("write");
+	perror("write f");
 	return 1;
 	}
 	//write the timestamp
         if (fwrite(&tostore.timestamp,sizeof(tostore.timestamp),1,fp)<0) { 
-	perror("write");
+	perror("write f");
 	return 1;
 	}
 
+
     fclose(fp);
+    printf("ready to write on inbox file ");
     sprintf(address,"users/%sInbox", tostore.to);
     //check if the file alredy exist and if it is read the number of inbox then close the file
     printf(" a new message inserted ");
@@ -206,7 +209,7 @@ int storetofile(PackageData tostore){
     if(fp == NULL){perror("error opening"); return 1;}
     
     if (fwrite(&ninbox,sizeof(int),1,fp)<0) {
-	perror("write");
+	perror("write to file");
 	return 1;
 	}
     //finaly return 0 if evrything goes fine 
@@ -219,11 +222,12 @@ int storetofile(PackageData tostore){
 
 //function to store a Message from MDS
 int storeMessage(int s){
-       
+       printf("Reciving a message ");
         PackageData tostore;
         if(recive_PackageData(&tostore,s)){
                 perror("Error in reciving data");
                 return 1;}
+
 
         //finaly store the data
         if(storetofile(tostore)){
@@ -410,7 +414,7 @@ do{
     
     // read the type of call from socket
     if (receive_int(&type,s)<0) {
-	perror("write");
+	perror("read call type");
 	exit(1);
     }
     else{
@@ -443,7 +447,7 @@ do{
 	        perror("read");
 	        exit(1);}
 	        //read the username to search inbox;
-                if (read(s,user,len+1)<0) {
+                if (read(s,&user,len+1)<0) {
 	        perror("read");
 	        exit(1);}
                 user[len] = '\0';

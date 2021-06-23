@@ -212,7 +212,7 @@ int32_t hashCode(PackageData tohash){
 	 //       return 1;}
     //check that everything was fine 
     if (send_int(rvalue,fd)<0) {
-	      perror("write");
+	      perror("write int ");
 	      return 1;}
    printf("Message sended");     
    return 0;

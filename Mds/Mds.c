@@ -39,7 +39,7 @@ int giveInbox( char usern[MAXLIMIT],int vdrIndex, int vdrs[VDRN]){
 	 perror("write");
 	 exit(1);}
    //write username to the socket +1 for endian value 
-   if (write(vdrs[vdrIndex],&usern,len+1)<0) {
+   if (write(vdrs[vdrIndex],usern,len+1)<0) {
 	 perror("write");
 	 exit(1);}
    //sleep(1);//give time to recive data and send the response from the i-th vdr process
@@ -334,7 +334,7 @@ fine:
 
 //reciv a message from the client and ask vdr to store it @param username is the username that is sending @param vdrs[VDRN] is the list of vdr socket, c is the socket to comunicate with client
 int ReciveMessage(char username[MAXLIMIT],int vdrs[VDRN],int c){
-   PackageData 	tosend;//the package to send to recive from client and send to the vdr
+   PackageData 	tosend;//the package  to recive from client and send to the vdr
    if(recive_PackageData(&tosend,c)){
       perror("problem while sending to MDS");
       return 1;
@@ -676,7 +676,7 @@ void dowork(int c,int vdrs[VDRN])
                   }}
 		         
 	   
-            if(type==5)printf("CHILD-CLOSE USER-LOGOUT  REQUESTED");
+            if(type==5)printf("CHILD-CLOSE USER-LOGOUT  REQUESTED \n");
 
 	 	      if(type!=0 &&(type<5||type>10))
             {perror("Malicius client is plausible now i kill this child");
@@ -686,7 +686,7 @@ void dowork(int c,int vdrs[VDRN])
             
     }while(type!=5);//type 5 close the connection with the client  //can be used only when the client want do disconect 
 
-
+   printf("Connection is getting closed");
     shutdown (c,2);
     close (c);	    
 }
