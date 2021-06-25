@@ -142,6 +142,7 @@ int storetofile(PackageData tostore)
         perror("write to file");
         return 1;
     }
+    fclose(fp);
     //finaly return 0 if evrything goes fine
     return 0;
 }
@@ -443,10 +444,10 @@ int main(int argc, char *argv[])
                 //read the username to search Audiodata;
                 if (receive_int(&userlen,s) < 0)
                 {
-                    perror("write");
+                    perror("read");
                     return 1;
                 }
-                if (read(s, &user, sizeof(user)) < 0)
+                if (read(s,&user,userlen +1 ) < 0)
                 {
                     perror("read");
                     exit(1);
@@ -454,7 +455,7 @@ int main(int argc, char *argv[])
                 //return 0 if there is an error and 1 if everything has gone fine       //return 0 if there is an error and 1 if everything has gone fine
                 if (readandsendMessages(user, s))
                 {
-                    perror("cant send message");
+                    perror("cant send messages");
                     exit(1);
                 }
             }

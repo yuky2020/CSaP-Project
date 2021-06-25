@@ -85,7 +85,7 @@ int32_t hashCode(PackageData tohash)
 
 int send_PackageData(PackageData tosend, int fd)
 {
-  int rvalue = 0; // the return falue from mds if eevrything as gone fine is 0:
+  int rvalue = 1; // the return falue from mds if eevrything as gone fine is 0:
   //write the type  to MDS
   if (send_int(tosend.type, fd) < 0)
   {
@@ -138,7 +138,7 @@ int send_PackageData(PackageData tosend, int fd)
     return 1;
   }
 
-  for (int i = 0; i < (tosend.message.maxFrameIndex / 1024); i++)
+  for (int i = 0; i < (tosend.message.maxFrameIndex*2 ); i++)
   {
     if (write(fd, &tosend.message.recordedSamples[i], sizeof(SAMPLE)) < 0)
     {
@@ -228,8 +228,9 @@ int recive_PackageData(PackageData *toreciv, int fd)
     perror("read");
     return 1;
   }
-  toreciv->message.recordedSamples = malloc(toreciv->message.maxFrameIndex * sizeof(float));
-  for (int i = 0; i < (toreciv->message.maxFrameIndex); i++)
+  //allocate the space block size 1024 channels=2
+  toreciv->message.recordedSamples = malloc(toreciv->message.maxFrameIndex *1024*2* sizeof(SAMPLE));
+  for (int i = 0; i < (toreciv->message.maxFrameIndex*1024*2); i++)
   {
     if (read(fd, &toreciv->message.recordedSamples[i], sizeof(SAMPLE)) < 0)
     {
@@ -334,7 +335,7 @@ int store_PackageData(PackageData tostore, FILE *fp)
     return 1;
   }
 
-  for (int i = 0; i < (tostore.message.maxFrameIndex / 1024); i++)
+  for (int i = 0; i < (tostore.message.maxFrameIndex*2 ); i++)
   {
     if (fwrite(&tostore.message.recordedSamples[i], sizeof(SAMPLE), 1, fp) < 0)
     {
@@ -354,13 +355,14 @@ int store_PackageData(PackageData tostore, FILE *fp)
     return 1;
   }
   //write the timestamp
-  if (fwrite(&tostore.timestamp, timelen + 1, 1, fp) < 0)
+  if (fwrite(&tostore.timestamp, timelen +1, 1, fp) < 0)
   {
     perror("write f");
     return 1;
   }
   return 0;
 }
+//funzione che legge un package data da un file
 int read_PackageData(PackageData *toread, FILE *fp)
 {
   int tolen, fromlen, timelen;
@@ -411,8 +413,8 @@ int read_PackageData(PackageData *toread, FILE *fp)
     return 1;
   }
   //allocate the memory
-  toread->message.recordedSamples = malloc((toread->message.maxFrameIndex / 1024) * sizeof(float));
-  for (int i = 0; i < (toread->message.maxFrameIndex / 1024); i++)
+  toread->message.recordedSamples = malloc((toread->message.maxFrameIndex ) * 2 *sizeof(SAMPLE));
+  for (int i = 0; i < (toread->message.maxFrameIndex*2 ); i++)
   {
     if (fread(&toread->message.recordedSamples[i], sizeof(SAMPLE), 1, fp) < 0)
     {
@@ -420,7 +422,7 @@ int read_PackageData(PackageData *toread, FILE *fp)
       return 1;
     }
   }
-  //write the hash
+  //read the hash
   if (fread(&toread->hash, sizeof(int), 1, fp) < 0)
   {
     perror("read f");
@@ -432,7 +434,7 @@ int read_PackageData(PackageData *toread, FILE *fp)
     return 1;
   }
   //write the timestamp
-  if (fread(&toread->timestamp, timelen, 1, fp) < 0)
+  if (fread(&toread->timestamp, timelen+1, 1, fp) < 0)
   {
     perror("read f");
     return 1;

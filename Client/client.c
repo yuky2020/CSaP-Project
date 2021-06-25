@@ -165,7 +165,7 @@ int disconnect(int s)
 int delateMessage(PackageData todel, int s)
 {
   int type = 10; // type for this call;
-      //wirte the type in the socket
+                 //wirte the type in the socket
   if (write(s, &type, sizeof(type)) < 0)
   {
     perror("write");
@@ -465,141 +465,129 @@ int addusertoadressbook(int s)
   return 0;
 }
 
-//list all mesage sended to this user contact the MDS to get data, is an interactive function
-int listallmessage(int s, char username[MAXLIMIT])
+//list all message sneded to the logged user return 1 on faiulure 0 on success
+int getallmessage(int s, char username[MAXLIMIT], PackageData *retMessageList)
 {
-  int mdsRet; //return value from mds;
+  int ctype, mdsRet; //Control type for sending;return value from mds;
   int i = 0;
   int type = 8;               //the type of call for get all messages destinated to a user;
   int inboxn = checkinbox(s); //recall now because inbox number could change in small time
   //PackageData *c=malloc(1*sizeof(PackageData));
   PackageData messageList[inboxn];
   //wirte in the socket data for login or register
-  do
+  if (send_int(type, s) < 0)
   {
-    if (write(s, &type, sizeof(type)) < 0)
+    perror("write");
+    return 1;
+  }
+  for (int i = 0; i < inboxn; i++)
+  {
+    if (receive_int(&ctype, s) < 0)
     {
-      perror("write");
+      perror("recive int ");
       return 1;
     }
-    printf("##############\n");
-    printf("INBOX\n");
-    printf("##############\n");
-    printf("SElECT MESSAGE OR 0 TO GO BACK TO MAIN MENU\n");
-
-    for (int i = 0; i < inboxn; i++)
+    if (ctype != 6)
     {
-      if (read(s, &messageList[i].type, sizeof(messageList[i].type)) < 0)
-      {
-        perror("read");
-        return 1;
-      }
-
-      if (read(s, &messageList[i].from, sizeof(messageList[i].from)) < 0)
-      {
-        perror("read");
-        return 1;
-      }
-      //read the user to the message is sended
-      if (read(s, &messageList[i].to, sizeof(messageList[i].to)) < 0)
-      {
-        perror("read");
-        return 1;
-      }
-      //read the size of audio data
-      if (read(s, &messageList[i].size, sizeof(messageList[i].size)) < 0)
-      {
-        perror("read");
-        return 1;
-      }
-      //read the audioData
-      if (read(s, &messageList[i].message, messageList[i].size) < 0)
-      {
-        perror("read");
-        return 1;
-      }
-
-      //read the hash
-      if (read(s, &messageList[i].hash, sizeof(messageList[i].hash)) < 0)
-      {
-        perror("read");
-        return 1;
-      }
-      //read timestamp
-      if (read(s, &messageList[i].timestamp, sizeof(messageList[i].timestamp)) < 0)
-      {
-        perror("read");
-        return 1;
-      }
-      //check if the hash is still valid
-      if (messageList[i].hash != hashCode(messageList[i]))
-      {
-        perror("hash is different");
-        return 1;
-      }
-    }
-    //after reding data read the return value
-    if (read(s, &mdsRet, sizeof(mdsRet)) < 0)
-    {
-      perror("read");
+      perror("sending is compromised");
       return 1;
     }
-    //check if is correct
-    if (mdsRet != 5)
+    if (recive_PackageData(&messageList[i], s))
     {
-      perror("Sending hasent work");
-      free(messageList);
+      perror("reciving hasent work");
       return 1;
     }
-    //send doble check to Mds
-    if (write(s, &mdsRet, sizeof(mdsRet)) < 0)
-    {
-      perror("read");
-      free(messageList);
-      return 1;
-    }
+  }
+  //after reding data read the return value
+  if (receive_int(&mdsRet, s) < 0)
+  {
+    perror("read");
+    return 1;
+  }
+  //check if is correct
+  if (mdsRet != 5)
+  {
+    perror("Sending hasent work");
+    //free(messageList);
+    return 1;
+  }
+  //send doble check to Mds
+  if (send_int(mdsRet, s) < 0)
+  {
+    perror("read");
+    //free(messagelist);
+    return 1;
+  }
 
-    for (i = (inboxn - 1); i >= 0; i--)
-    { //print like that for have the last message frist
-      printf("%d)Message from %s sended %s\n", (inboxn - i), messageList[i].from, messageList[i].timestamp);
-    }
+  *retMessageList = *messageList;
+  return 0;
+}
+//list all mesage sended to this user contact the MDS to get data, is an interactive function
+int listallmessage(int s, char username[MAXLIMIT])
+{
+  int j, i = 0;
+  int inboxn = checkinbox(s); //recall now because inbox number could change in small time
+  //PackageData *c=malloc(1*sizeof(PackageData));
+  if (inboxn == 0)
+  {
+    printf("NO NEW MESSAGES FOUND, INBOX IS CLEAR \n");
+  }
+  else
+  {
+    PackageData messageList[inboxn];
 
-    scanf("%d", &i);
+    //start showing message
+    do
+    {
+      printf("##############\n");
+      printf("INBOX\n");
+      printf("##############\n");
+      printf("SElECT MESSAGE OR 0 TO GO BACK TO MAIN MENU\n");
+      if (getallmessage(s, username, messageList))
+      {
+        perror("problem with reading message");
+        return 1;
+      }
+      for (j = (inboxn - 1); j >= 0; j--)
+      { //print like that for have the last message frist
+        printf("%d)Message from %s sended %s \n", (inboxn - j), messageList[j].from, messageList[j].timestamp);
+      }
+      //lets select a  message
+      scanf("%d", &j);
+      j = (j - inboxn) * -1;
+      while (j >= inboxn || j < 0)
+      {
+        printf("error message not found try again \n");
+        scanf("%d", &j);
+      }
 
-    if (i >= inboxn)
-    {
-      printf("error message not found 404");
-      sleep(1);
-      i = 4;
-    } //set a new value for i so you can back to all message;
-    else if (i != 0)
-    {
-      while (i < 4)
-      { //if 3 the function reload all the message and you can list it again;
-        //playback the message
-        playback(messageList[(inboxn - i)].message);
-        printf("From %s \nTime:%s\n", messageList[(inboxn - i)].from, messageList[(inboxn - i)].timestamp);
-        printf("1) for listen again \n");
+      do
+      {
+        printf("From %s \nTime:%s\n", messageList[j].from, messageList[j].timestamp);
+        printf("1) for listen the message \n");
         printf("2)to inoltrate the message\n");
         printf("3)to delete the message\n");
         printf("4)come back to inbox \n");
         printf("5)go back to main page\n");
         scanf("%d", &i);
+        if (i == 1)
+        {
+          playback(messageList[j].message);
+        }
         if (i == 2)
         {
           selectuserto(s, messageList[i].to); //inoltrate to a new user the message;
-          strcpy(messageList[i].from, username);
-          if (send_PackageData(messageList[(inboxn - i)], s))
+          strcpy(messageList[j].from, username);
+          if (send_PackageData(messageList[j], s))
             printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n"); //sendMessage return 1 upon fail
           else
           {
-            printf("MESSAGE SENT SUCESSFULLY\n");
-            i = 4;
+            printf("MESSAGE INOLTRATED SUCESSFULLY\n");
           }
         }
         if (i == 3)
         {
-          if (delateMessage(messageList[(inboxn - i)], s))
+          if (delateMessage(messageList[j], s))
             printf("MESSAGE NOT DELATED NETWORK PROBLEM TRY AGAIN\n");
           else
           {
@@ -607,11 +595,13 @@ int listallmessage(int s, char username[MAXLIMIT])
             i = 4; //go back to inbox after delation}
           }
         }
-      }
-    }
-  } while (i != 5 && i != 0);
-  free(messageList); //good thing to do
-  return 0;          //return 0 in case of success;
+      } while (i <= 4);
+
+    } while (i <= 5 || j != 0);
+
+    free(messageList); //good thing to do
+  }                    //close the else of 0 or some message
+  return 0;            //return 0 in case of success;
 }
 //send login data to socket return 1 for auth compleate 0 on failed
 int login(userData u, int t, int s)

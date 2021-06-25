@@ -427,7 +427,7 @@ int ReciveMessage(char username[MAXLIMIT], int vdrs[VDRN], int c)
 int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int c)
 {
    int vdrToType = 8;                                //vdr type for this operation
-   int vdrRet, clientRet;                            //return value from vdr;and client
+   int vdrRet,type ,clientRet;                            //return value from vdr;and client
    int inboxN = giveInbox(username, vdrIndex, vdrs); //number of message to read;
    PackageData tmp;                  //create the structure to conserve the data, an array is plausible but not need since we resend all to client 
    sem_t *sem;                                       //poisix semaphore for comunicate with vdr without problem ;
@@ -460,10 +460,28 @@ int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int
    for (int i = 0; i < inboxN; i++)
    {
       //read the data for every message package
-      recive_PackageData(&tmp,vdrs[vdrIndex]);
+      //i will recive type 6 before for indicate that a package data is sended
+      if (receive_int(&type, vdrs[vdrIndex]) < 0)
+      {
+      perror("recive int ");
+      return 1;
+      }
+      if(type!=6){
+         perror("sending is compromised");
+         return 1;
+      }
+      if(recive_PackageData(&tmp,vdrs[vdrIndex]))
+      {
+         perror("problem reciving the message from the vdr");
+         return 1;
+      }
      
       //now sending the data to the client
-      send_PackageData(tmp,c);
+      if(send_PackageData(tmp,c))
+      {
+         perror("problem in sending a message to the client");
+         return 1;
+      }
    }   
 
    if (receive_int(&vdrRet,vdrs[vdrIndex])<0)
@@ -474,7 +492,7 @@ int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int
 
    if (vdrRet != 5)
    {
-      perror("Value error on last read");
+      perror("Value error on last read problem with vdr");
       return 1;
    }
    sem_post(sem); //unlock the vdr semaphore "incresing the  counter"
@@ -486,15 +504,15 @@ int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int
    }
    //need to come back at this point 
    //at this point we can send the return value also to the client for let know that sending is over
-   if (write(c, &vdrRet, sizeof(vdrRet)) < 0)
+   if (send_int(vdrRet,c ) < 0)
    {
       perror("write");
       return 1;
    }
    //and wait for a double check from client
-   if (read(c, &clientRet, sizeof(clientRet)) < 0)
+   if (receive_int(&clientRet,c) < 0)
    {
-      perror("write");
+      perror("read");
       return 1;
    }
    if (clientRet != 5)
