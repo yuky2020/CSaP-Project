@@ -427,9 +427,9 @@ int ReciveMessage(char username[MAXLIMIT], int vdrs[VDRN], int c)
 int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int c)
 {
    int vdrToType = 8;                                //vdr type for this operation
-   int vdrRet,type ,clientRet;                            //return value from vdr;and client
+   int vdrRet, type, clientRet;                      //return value from vdr;and client
    int inboxN = giveInbox(username, vdrIndex, vdrs); //number of message to read;
-   PackageData tmp;                  //create the structure to conserve the data, an array is plausible but not need since we resend all to client 
+   PackageData tmp;                                  //create the structure to conserve the data, an array is plausible but not need since we resend all to client
    sem_t *sem;                                       //poisix semaphore for comunicate with vdr without problem ;
    char saddress[(MAXLIMIT + 10)] = {'\0'};          //the adress of the semphore for the i vdr
    sprintf(saddress, "%s%d", SEM_NAME, vdrIndex);
@@ -441,18 +441,18 @@ int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int
    }
    sem_wait(sem); //lock the semaphore so you can write to the VDR socket without risk
    //send the type to the vdr
-   if (send_int(vdrToType,vdrs[vdrIndex]) < 0)
+   if (send_int(vdrToType, vdrs[vdrIndex]) < 0)
    {
       perror("write");
       return 1;
    }
    // send the username to the vdr ;
-   if (send_int(strlen(username),vdrs[vdrIndex]) < 0)
+   if (send_int(strlen(username), vdrs[vdrIndex]) < 0)
    {
       perror("write");
       return 1;
    }
-   if (write(vdrs[vdrIndex], username, strlen(username)+1) < 0)
+   if (write(vdrs[vdrIndex], username, strlen(username) + 1) < 0)
    {
       perror("write");
       return 1;
@@ -463,28 +463,29 @@ int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int
       //i will recive type 6 before for indicate that a package data is sended
       if (receive_int(&type, vdrs[vdrIndex]) < 0)
       {
-      perror("recive int ");
-      return 1;
+         perror("recive int ");
+         return 1;
       }
-      if(type!=6){
+      if (type != 6)
+      {
          perror("sending is compromised");
          return 1;
       }
-      if(recive_PackageData(&tmp,vdrs[vdrIndex]))
+      if (recive_PackageData(&tmp, vdrs[vdrIndex]))
       {
          perror("problem reciving the message from the vdr");
          return 1;
       }
-     
+
       //now sending the data to the client
-      if(send_PackageData(tmp,c))
+      if (send_PackageData(tmp, c))
       {
          perror("problem in sending a message to the client");
          return 1;
       }
-   }   
+   }
 
-   if (receive_int(&vdrRet,vdrs[vdrIndex])<0)
+   if (receive_int(&vdrRet, vdrs[vdrIndex]) < 0)
    {
       perror("Last read operation failed");
       return 1;
@@ -502,15 +503,15 @@ int getClientMessages(char username[MAXLIMIT], int vdrIndex, int vdrs[VDRN], int
       perror("sem_close failed");
       exit(0);
    }
-   //need to come back at this point 
+   //need to come back at this point
    //at this point we can send the return value also to the client for let know that sending is over
-   if (send_int(vdrRet,c ) < 0)
+   if (send_int(vdrRet, c) < 0)
    {
       perror("write");
       return 1;
    }
    //and wait for a double check from client
-   if (receive_int(&clientRet,c) < 0)
+   if (receive_int(&clientRet, c) < 0)
    {
       perror("read");
       return 1;
@@ -736,11 +737,6 @@ void dowork(int c, int vdrs[VDRN])
             {
                perror("client recive wrong message");
                isDone = 1;
-            }
-            if (send_int( isDone,c) < 0)
-            {
-               perror("write");
-               exit(1);
             }
          }
 

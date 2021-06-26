@@ -9,6 +9,8 @@
 #include <time.h>
 #include "util.h"
 #include <errno.h>
+#define NUMCHANNELS 2
+#define BLOCKSIZE 1024
 
 //functions to send an int trought a c stream socket
 int send_int(int num, int fd)
@@ -132,13 +134,13 @@ int send_PackageData(PackageData tosend, int fd)
     return 1;
   }
   //saing sapce is always a good idea
-  if (send_int(tosend.message.maxFrameIndex / 1024, fd) < 0)
+  if (send_int(tosend.message.maxFrameIndex /BLOCKSIZE, fd) < 0)
   {
     perror("write");
     return 1;
   }
 
-  for (int i = 0; i < (tosend.message.maxFrameIndex*2 ); i++)
+  for (int i = 0; i < (tosend.message.maxFrameIndex*NUMCHANNELS ); i++)
   {
     if (write(fd, &tosend.message.recordedSamples[i], sizeof(SAMPLE)) < 0)
     {
@@ -229,8 +231,8 @@ int recive_PackageData(PackageData *toreciv, int fd)
     return 1;
   }
   //allocate the space block size 1024 channels=2
-  toreciv->message.recordedSamples = malloc(toreciv->message.maxFrameIndex *1024*2* sizeof(SAMPLE));
-  for (int i = 0; i < (toreciv->message.maxFrameIndex*1024*2); i++)
+  toreciv->message.recordedSamples = malloc(toreciv->message.maxFrameIndex *BLOCKSIZE*NUMCHANNELS* sizeof(SAMPLE));
+  for (int i = 0; i < (toreciv->message.maxFrameIndex*BLOCKSIZE*NUMCHANNELS); i++)
   {
     if (read(fd, &toreciv->message.recordedSamples[i], sizeof(SAMPLE)) < 0)
     {
@@ -257,11 +259,9 @@ int recive_PackageData(PackageData *toreciv, int fd)
     return 1;
   }
   toreciv->timestamp[timestampL] = '\0'; /* Terminate the string! */
-
-  //check if the hash is still valid
-  printf("%s,%s\n", toreciv->to, toreciv->from);
-  printf("%d", toreciv->hash);
+  //save the max frame of the right size 
   toreciv->message.maxFrameIndex = toreciv->message.maxFrameIndex * 1024;
+  //check if the hash is still valid
   if (toreciv->hash != hashCode(*toreciv))
   {
     perror("hash is different");
@@ -277,7 +277,6 @@ int recive_PackageData(PackageData *toreciv, int fd)
     perror("write int ");
     return 1;
   }
-  printf("Message recived");
   return 0;
 }
 
@@ -335,7 +334,7 @@ int store_PackageData(PackageData tostore, FILE *fp)
     return 1;
   }
 
-  for (int i = 0; i < (tostore.message.maxFrameIndex*2 ); i++)
+  for (int i = 0; i < (tostore.message.maxFrameIndex*NUMCHANNELS ); i++)
   {
     if (fwrite(&tostore.message.recordedSamples[i], sizeof(SAMPLE), 1, fp) < 0)
     {
@@ -413,7 +412,7 @@ int read_PackageData(PackageData *toread, FILE *fp)
     return 1;
   }
   //allocate the memory
-  toread->message.recordedSamples = malloc((toread->message.maxFrameIndex ) * 2 *sizeof(SAMPLE));
+  toread->message.recordedSamples = malloc((toread->message.maxFrameIndex ) * NUMCHANNELS *sizeof(SAMPLE));
   for (int i = 0; i < (toread->message.maxFrameIndex*2 ); i++)
   {
     if (fread(&toread->message.recordedSamples[i], sizeof(SAMPLE), 1, fp) < 0)
@@ -464,76 +463,76 @@ int datecmp(char a[TIMESTAMPS], char b[TIMESTAMPS])
     return -1;
   //now check mounth
   //Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
-  if ((int)a[5] == (int)"J")
+  if ((int)a[5] == (int)'J')
   {
-    if (a[6] == "a")
+    if (a[6] == 'a')
       ma = 1;
     else
     {
-      if (a[7] == "n")
+      if (a[7] == 'n')
         ma = 6;
       ma = 7;
     }
   }
-  if ((int)a[5] == "F")
+  if ((int)a[5] == 'F')
     ma = 2;
-  if ((int)a[5] == "M")
+  if ((int)a[5] == 'M')
   {
-    if ((int)a[7] == "r")
+    if ((int)a[7] == 'r')
       ma = 3;
     else
       ma = 5;
   }
-  if ((int)a[5] == "A")
+  if ((int)a[5] == 'A')
   {
-    if (a[6] == "p")
+    if (a[6] == 'p')
       ma = 4;
     else
       ma = 8;
   }
-  if ((int)a[5] == "S")
+  if ((int)a[5] == 'S')
     ma = 9;
-  if ((int)a[5] == "O")
+  if ((int)a[5] == 'O')
     ma = 10;
-  if ((int)a[5] == "N")
+  if ((int)a[5] == 'N')
     ma = 11;
-  if ((int)a[5] == "D")
+  if ((int)a[5] == 'D')
     ma = 12;
 
-  if ((int)b[5] == "J")
+  if ((int)b[5] == 'J')
   {
-    if ((int)b[6] == "a")
+    if ((int)b[6] == 'a')
       mb = 1;
     else
     {
-      if ((int)b[7] == "n")
+      if ((int)b[7] == 'n')
         mb = 6;
       mb = 7;
     }
   }
-  if ((int)b[5] == "F")
+  if ((int)b[5] == 'F')
     mb = 2;
-  if ((int)b[5] == "M")
+  if ((int)b[5] == 'M')
   {
-    if ((int)b[7] == "r")
+    if ((int)b[7] == 'r')
       mb = 3;
     else
       mb = 5;
   }
-  if ((int)b[5] == "A")
+  if ((int)b[5] == 'A')
   {
-    if ((int)b[6] == "p")
+    if ((int)b[6] == 'p')
       mb = 4;
     else
       mb = 8;
   }
-  if ((int)b[5] == "S")
+  if ((int)b[5] == 'S')
     mb = 9;
-  if ((int)b[5] == "O")
+  if ((int)b[5] == 'O')
     mb = 10;
-  if ((int)b[5] == "N")
+  if ((int)b[5] == 'N')
     mb = 11;
-  if ((int)b[5] == "D")
+  if ((int)b[5] == 'D')
     mb = 12;
   //finaly i have got the months for both
   if (ma > mb)

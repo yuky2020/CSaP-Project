@@ -4,3 +4,5 @@ install:
 clean:
 	@echo "Cleaning up..."
 	rm MDS
+	@echo"Removing also poisx sem starting with sem.
+	rm /dev/shm/sem.*
