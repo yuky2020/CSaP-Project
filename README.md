@@ -42,9 +42,11 @@ portaudio already present and  bundled you only need to install some audio relat
 
 80's style command line interface.
 
-### Requirents:
+###
 
-all the requirements nedded to use a bundled version of portaudio 
+### Dependencies:
+
+all the dependencies nedded to use a bundled version of portaudio 
 
 #### -ljack  libjack-dev
 
