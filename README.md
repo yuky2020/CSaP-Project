@@ -42,7 +42,7 @@ portaudio already present and  bundled you only need to install some audio relat
 
 80's style command line interface.
 
-###
+### 
 
 ### Dependencies:
 
@@ -59,6 +59,20 @@ sudo apt-get  install libsndfile-dev
 #### -lasound
 
 sudo apt-get install libasound2-dev 
+
+### How to Install?
+
+an easy script is already here for debian users
+
+### How to test ?
+
+there is a script for everything in this project 
+
+### How to clean
+
+you already know 
+
+
 
 ### Release notable problems:
 
