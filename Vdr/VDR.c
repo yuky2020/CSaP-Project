@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in saddr;
     struct hostent *hst;
     char hostname[MAXLIMIT];
-    char port[5];
+    char port[6];
     int type; // indicates the type of request from MDS 1 is a echo request 2 is for a audio message
     FILE *config;
 
@@ -272,7 +272,7 @@ int main(int argc, char *argv[])
     fclose(config);
 
     // here for testing pourpose
-    printf("%s,%s", hostname, port);
+    
 
     // Create the stream socket
     if ((s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
     puts("socket done");
 
     // Determine host address by its network name
-    if ((hst = gethostbyname("localhost")) == NULL)
+    if ((hst = gethostbyname(hostname)) == NULL)
     {
         perror("gethostbyname");
         exit(1);
@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
     // Fill structure
     bcopy(hst->h_addr, &saddr.sin_addr, hst->h_length);
     saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(atoi(port));
+    saddr.sin_port = htons(16000);
 
     // Connect to other socket(mds)
     if (connect(s, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)

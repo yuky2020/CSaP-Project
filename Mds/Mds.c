@@ -14,6 +14,8 @@
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) // "Permessi del semaforo"
 #define INITIAL_VALUE 1                                   //intial value of the semaphore
 #define VDRN 1                                            //Number of vdr used
+#define VDRPORT 16000
+#define CLIENTPORT 20000
 //get the number of inbox message of a logged user;
 int giveInbox(char usern[MAXLIMIT], int vdrIndex, int vdrs[VDRN])
 {
@@ -835,6 +837,8 @@ int main()
    int running;    //number of running client
    int maxspawn;   //max number of  running client as far as Mds process is started;
    int runningvdr; //number of  vdr actualy connected
+
+   
    //create semaphores for vdr
    for (int j = 0; j < VDRN; j++)
    {
@@ -871,7 +875,7 @@ int main()
    puts("client socket done waiting for all vdr connection and echo each one ");
 
    saddr.sin_family = AF_INET;
-   saddr.sin_port = htons(16000);
+   saddr.sin_port = htons(VDRPORT);
    saddr.sin_addr.s_addr = INADDR_ANY;
 
    if (bind(vdr, (struct sockaddr *)&saddr, sizeof(saddr)))
@@ -939,7 +943,7 @@ int main()
    puts("client socket done");
 
    saddr.sin_family = AF_INET;
-   saddr.sin_port = htons(20000);
+   saddr.sin_port = htons(CLIENTPORT);
    saddr.sin_addr.s_addr = INADDR_ANY;
 
    if (bind(s, (struct sockaddr *)&saddr, sizeof(saddr)))

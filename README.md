@@ -14,7 +14,7 @@ MDS:Main server, interact with the user for authentication and operate between C
 
 ## Features
 
-Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better compatibility.
+Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better inter-compatibility.
 
 Auto-crop silence in the message by analyzing peek frequency.
 
@@ -22,11 +22,11 @@ Possibility of search for messages from a specific user, a date range and even t
 
 Possibility to send long audio without death times ;
 
-No TIme limit for audio rec has still reconized ;
+No Time limit for audio rec has still reconized ;
 
 Huge use of semaphore and parent-child processes(use POSIX semaphore insted of system five one)..
 
-The project is highly scalable(you can add how much VDR you want ), but can still improve(es. Decentralized Mdss that can comunicate each other  )
+The project is highly scalable(you can add how much VDRs you want ), but can still improve(es. Decentralized Mdss that can comunicate each other  )
 
 
 

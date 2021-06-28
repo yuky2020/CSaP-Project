@@ -45,9 +45,9 @@ int selectuserto(int s, char *tmp)
       if (k > j)
         printf("this number is still not presnt");
     } while (k > j);
-    strcpy(tmp, usernameList[(k + 1)]);
+    strcpy(tmp, usernameList[(k - 1)]);
     //  free(usernameList);//fre the user list not useful anymore;
-    return 1;
+    return 0;
   }
 
   else if (i == 2)
@@ -208,14 +208,16 @@ int addusertoadressbook(int s)
 
   while (!feof(fp))
   { // while not end of file
-    fread(usernameList[j], MAXLIMIT*sizeof(char), 1, fp);
+    fread(usernameList[j], MAXLIMIT * sizeof(char), 1, fp);
     j++;
   }
   j--;        //becouse you encrement before re enter
   fclose(fp); //close the file for now
 
   printf("insert username to add\n");
-  scanf("%s", toadd);
+  //the frist call is only for clean the buffer
+  fgets(toadd, MAXLIMIT, stdin);
+  fgets(toadd, MAXLIMIT, stdin);
   toadd[strlen(toadd)] = '\0';
   //check if the user is alredy in the adressBook;
   for (i = 0; i <= j; i++)
@@ -288,7 +290,7 @@ int addusertoadressbook(int s)
   {
 
     fp = fopen("AdressBook", "ab");
-    if (fwrite(toadd, MAXLIMIT*sizeof(char), 1, fp) < 0)
+    if (fwrite(toadd, MAXLIMIT * sizeof(char), 1, fp) < 0)
     {
       perror("error in adding the name ");
       return 1;
@@ -296,11 +298,13 @@ int addusertoadressbook(int s)
     fclose(fp);
     printf("user added \n");
     return 0;
-
-  }else{
-  printf("no user with this name found try another one \n");
-  return 0;
-}}
+  }
+  else
+  {
+    printf("no user with this name found try another one \n");
+    return 0;
+  }
+}
 
 //list all message sneded to the logged user return 1 on faiulure 0 on success
 int getallmessage(int s, int inboxn, PackageData retMessageList[inboxn])
@@ -376,6 +380,7 @@ int showMessagewithOptions(int s, char username[MAXLIMIT], PackageData todispaly
     {
       selectuserto(s, todispaly.to); //inoltrate to a new user the message;
       strcpy(todispaly.from, username);
+      todispaly.hash=hashCode(todispaly);
       if (send_PackageData(todispaly, s))
         printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n"); //sendMessage return 1 upon fail
       else
@@ -628,7 +633,7 @@ int sendNew(char username[20], int s)
   strcpy(tosend.from, username);
   if (selectuserto(s, tosend.to))
   { //select the uset to send the data to
-    perror("Problem with mds");
+    perror("Problem with get a user");
     return 1;
   }
   time_t ltime;                                         /* calendar time */
@@ -714,7 +719,7 @@ int main(int argc, char *argv[])
   char hostname[MAXLIMIT];
   struct sockaddr_in saddr;
   struct hostent *hst;
-  char port[5]; //used to read and store  the port
+  char port[6]; //used to read and store  the port
   FILE *config;
   //open the config file
   if ((config = fopen("config.txt", "r")) == NULL)
@@ -723,14 +728,18 @@ int main(int argc, char *argv[])
     // Program exits if file pointer returns NULL.
     exit(1);
   }
-  //skip the string hostname:
-  fseek(config, 10 * sizeof(char), SEEK_CUR);
+  //skip the frist  string 
+  fgets(hostname,20,config);
   // reads text until newline is encountered
-  fscanf(config, "%[^\n]", hostname);
+  fgets(hostname, 20, config);
+  //add terminaton
+  hostname[strlen(hostname) - 2] = '\0';
+
+  fgets(port, 6, config);
   //skip also port:
-  fseek(config, 7 * sizeof(char), SEEK_CUR);
+
   //read port number
-  fscanf(config, "%[^\n]", port);
+
   fclose(config);
 
   // here for testing pourpose
@@ -744,7 +753,7 @@ int main(int argc, char *argv[])
   }
 
   // Determine host address by its network name
-  if ((hst = gethostbyname("localhost")) == NULL)
+  if ((hst = gethostbyname(hostname)) == NULL)
   {
     perror("gethostbyname");
     exit(1);
@@ -872,7 +881,7 @@ int main(int argc, char *argv[])
           char fate;
           printf("THIS CANNNOT BE UNDONE ARE YOU SURE ? Y/N");
           scanf(" %c", &fate);
-          if (fate == 'Y')
+          if (fate == 'Y'){
             if (fullwipemessage(s))
             {
               perror("full wipe has not work");
@@ -880,7 +889,7 @@ int main(int argc, char *argv[])
             else
             {
               printf("ALL MESSAGE GONE \n ");
-            }
+            }}
         }
         break;
         case 4:
