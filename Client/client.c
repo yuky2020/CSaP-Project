@@ -67,7 +67,6 @@ int selectuserto(int s, char *tmp)
     }
     //at the lest there is one user
     printf("actualy registred users %d \n", ru);
-    sleep(5);
     if (ru <= 1)
     {
       perror("problem with MDS");
@@ -166,7 +165,7 @@ int delateMessage(PackageData todel, int s)
 {
   int type = 10; // type for this call;
                  //wirte the type in the socket
-  if (write(s, &type, sizeof(type)) < 0)
+  if (send_int(type, s) < 0)
   {
     perror("write");
     return 1;
@@ -178,15 +177,15 @@ int delateMessage(PackageData todel, int s)
     return 1;
   }
   //check the return value from MDS;
-  if (read(s, &type, sizeof(type)) < 0)
+  if (receive_int(&type, s) < 0)
   {
     perror("read");
     return 1;
   }
-  if (type)
-    return 1;
-  else
+  if (type == 0)
     return 0;
+  else
+    return 1;
 }
 
 //add one user to the adressBook after check it it is or not enroled in the server
@@ -195,20 +194,21 @@ int addusertoadressbook(int s)
   FILE *fp; //file where to place adressBook;
   char usernameList[ADDRESSBOOKLIMIT][MAXLIMIT];
   char toadd[MAXLIMIT]; //username to add to the adressBook;
-  int j, trov, i = 0;   //for save the number of user and for going trought it
+  int j, trov, i, ru;   //for save the number of user and for going trought it
+  int len = 0;
+  trov = 0;
   if ((fp = fopen("AdressBook", "rb")) == NULL)
   {
-    fclose(fp);
     fp = fopen("AdressBook", "wb");
     fclose(fp);
     fp = fopen("AdressBook", "rb");
-    perror("NoAdressBoook found i crate one");
+    perror("NoAdressBoook found i create a new one");
   }
   j = 0;
 
   while (!feof(fp))
   { // while not end of file
-    fread(usernameList[j], sizeof(char[MAXLIMIT]), 1, fp);
+    fread(usernameList[j], MAXLIMIT*sizeof(char), 1, fp);
     j++;
   }
   j--;        //becouse you encrement before re enter
@@ -216,6 +216,7 @@ int addusertoadressbook(int s)
 
   printf("insert username to add\n");
   scanf("%s", toadd);
+  toadd[strlen(toadd)] = '\0';
   //check if the user is alredy in the adressBook;
   for (i = 0; i <= j; i++)
   {
@@ -227,80 +228,87 @@ int addusertoadressbook(int s)
   }
   //check if the user exist() from server
   int type = 9; //the type of call for this function
-  if (write(s, &type, sizeof(type)) < 0)
+  if (send_int(type, s))
   {
     perror("write");
     return 1;
   }
-
-  if (read(s, &j, sizeof(int)) < 0)
+  //recive currently registred users
+  if (receive_int(&ru, s))
   {
     perror("write");
     return 1;
   }
-  if (j < 1)
+  if (ru <= 1)
   {
     perror("problem with MDS");
     return 1;
   }
-  //crate an array with all username
-  char usernameListS[j][MAXLIMIT];
-  trov = 0; //set trov =1 when we find a matching
+  //allocate the space for the users list
+  char usernamesist[ru][MAXLIMIT];
 
-  //read all username and print it
-  for (int k = 0; k < j; j++)
+  //read all the username and add it to the list
+  for (int k = 0; k < ru; k++)
   {
-    //read from socket and print for the user
-    if (read(s, &usernameListS[k], sizeof(char[MAXLIMIT])) < 0)
+    //read the lenght of the next string;
+    if (read(s, &len, sizeof(int)) < 0)
     {
-      perror("write");
+      perror("read");
       return 1;
     }
-    if (strcmp(usernameListS[k], toadd) == 0)
+    //read from socket and print for the user
+    if (read(s, usernamesist[k], len + 1) < 0)
+    {
+      perror("read");
+      return 1;
+    }
+    usernamesist[k][len] = '\0'; /* Terminate the string! */
+    if (strcmp(toadd, usernamesist[k]) == 0)
       trov = 1;
   }
-  if (read(s, &type, sizeof(int)) < 0)
+  if (receive_int(&type, s) < 0)
   {
-    perror("write");
+    perror("read");
     return 1;
   }
   //type is used to store the end of trasmission from MDS;
   if (type != 1)
   {
-    perror("write");
+    perror("type");
     return 1;
   }
   type = 5; //end of trasmission for MDS
-  if (write(s, &type, sizeof(type)) < 0)
+  if (send_int(type, s) < 0)
   {
     perror("write");
     return 1;
   }
-  //if i found it i can add it to the adressBook
-  if (trov)
+  //if i found it
+  if (trov == 1)
   {
-    if ((fp = fopen("AdressBook", "ab")) == NULL)
-    { //open finaly in append mode to add the new user
-      perror(" opening file");
-      // Program exits if file pointer returns NULL.
+
+    fp = fopen("AdressBook", "ab");
+    if (fwrite(toadd, MAXLIMIT*sizeof(char), 1, fp) < 0)
+    {
+      perror("error in adding the name ");
       return 1;
     }
-    fwrite(toadd, sizeof(char[MAXLIMIT]), 1, fp);
     fclose(fp);
-    return 1;
-  }
+    printf("user added \n");
+    return 0;
+
+  }else{
+  printf("no user with this name found try another one \n");
   return 0;
-}
+}}
 
 //list all message sneded to the logged user return 1 on faiulure 0 on success
-int getallmessage(int s, PackageData *retMessageList)
+int getallmessage(int s, int inboxn, PackageData retMessageList[inboxn])
 {
   int ctype, mdsRet; //Control type for sending;return value from mds;
   int i = 0;
-  int type = 8;               //the type of call for get all messages destinated to a user;
-  int inboxn = checkinbox(s); //recall now because inbox number could change in small time
+  int type = 8; //the type of call for get all messages destinated to a user;
   //PackageData *c=malloc(1*sizeof(PackageData));
-  PackageData messageList[inboxn];
   //wirte in the socket data for login or register
   if (send_int(type, s) < 0)
   {
@@ -319,7 +327,7 @@ int getallmessage(int s, PackageData *retMessageList)
       perror("sending is compromised");
       return 1;
     }
-    if (recive_PackageData(&messageList[i], s))
+    if (recive_PackageData(&retMessageList[i], s))
     {
       perror("reciving hasent work");
       return 1;
@@ -346,7 +354,6 @@ int getallmessage(int s, PackageData *retMessageList)
     return 1;
   }
 
-  *retMessageList = *messageList;
   return 0;
 }
 //show a message details and do some actions
@@ -410,7 +417,7 @@ int listallmessage(int s, char username[MAXLIMIT])
     printf("INBOX\n");
     printf("##############\n");
     printf("SElECT MESSAGE OR 0 TO GO BACK TO MAIN MENU\n");
-    if (getallmessage(s, messageList))
+    if (getallmessage(s, inboxn, messageList))
     {
       perror("problem with reading message");
       return 1;
@@ -420,8 +427,8 @@ int listallmessage(int s, char username[MAXLIMIT])
       printf("%d)Message from %s sended %s \n", (inboxn - j), messageList[j].from, messageList[j].timestamp);
     }
     //lets select a  message
-    scanf("%d", &j); 
-    while (j > inboxn || j < 0)
+    scanf("%d", &j);
+    while (j > inboxn || j <= 0)
     {
       printf("error message not found try again \n");
       scanf("%d", &j);
@@ -441,11 +448,11 @@ int serchMessages(char user[MAXLIMIT], int s)
   char toserchu[MAXLIMIT];      //the string to search for a user  ;
   char toserchd[2][TIMESTAMPS]; //the date between search
   int mdsRet;                   //return value from mds;
-  int k, i,len,t = 0;              //for select among user or date serch and valid or not ;
-  len=0;
-  int type = 8;                 //the type of call for get all messages destinated to a user;
-  int inboxn = checkinbox(s);   //recall now because inbox number could change in small time
-  int trov[inboxn];             //array to save the index of matching value  
+  int k, i, len, t = 0;         //for select among user or date serch and valid or not ;
+  len = 0;
+  int type = 8;               //the type of call for get all messages destinated to a user;
+  int inboxn = checkinbox(s); //recall now because inbox number could change in small time
+  int trov[inboxn];           //array to save the index of matching value
   //PackageData *c=malloc(1*sizeof(PackageData));
   PackageData messageList[inboxn];
   //wirte the type in the socket
@@ -467,7 +474,7 @@ int serchMessages(char user[MAXLIMIT], int s)
     scanf("%s", toserchd[1]);
   }
 
-  if (getallmessage(s, messageList))
+  if (getallmessage(s, inboxn, messageList))
   {
     perror("problem reciving the message ");
     return 1;
@@ -487,19 +494,25 @@ int serchMessages(char user[MAXLIMIT], int s)
     }
     if (t == 1)
     {
-      trov[(len)]= i;
+      trov[(len)] = i;
       len++;
       printf("%d)Message from %s sended %s\n", (len), messageList[i].from, messageList[i].timestamp);
     }
   }
+  //se non ho trovato nulla esco
+  if (len == 0)
+  {
+    printf("no message found for the search \n");
+    return 0;
+  }
   scanf("%d", &i);
-  
-  while (i > len || i < 0)
+
+  while (i > len || i <= 0)
   {
     printf("error message not found try again \n");
     scanf("%d", &i);
   }
-  i = trov[i-1];
+  i = trov[i - 1];
   if (showMessagewithOptions(s, user, messageList[i]))
     perror("error in displaying the data ");
 
@@ -554,7 +567,58 @@ int login(userData u, int t, int s)
 
   return t;
 }
+//function to change password once logged in the system 0 on success 1 on error
+int changepasswd(int s)
+{
+  int type = 11; //type for this call
+  int len;
+  int retValue = 1;
+  char newPasswd[MAXLIMIT];
+  char newPasswdConf[MAXLIMIT];
+  do
+  {
+    printf("\n");
+    printf("New Password: ");
+    fgets(newPasswd, MAXLIMIT, stdin);
+    printf("\n RE-type it again: ");
+    fgets(newPasswdConf, MAXLIMIT, stdin);
+    if (strcmp(newPasswd, newPasswdConf) != 0)
+    {
+      printf("\n try again password differs \n");
+    }
+    else
+      printf("\n");
 
+  } while (strcmp(newPasswd, newPasswdConf) != 0);
+  len = strlen(newPasswd);
+  //send  to the socket the type of the call
+  if (send_int(type, s) < 0)
+  {
+    perror("write");
+    return 1;
+  }
+
+  //send  to the socket the len
+  if (send_int(len, s) < 0)
+  {
+    perror("write");
+    return 1;
+  }
+  //send the password to the socket ad one for the endian
+  if (write(s, newPasswd, len + 1) < 0)
+  {
+    perror("write");
+    return 1;
+  }
+
+  // Read  from socket 1 for change passwd done or not 0 for not
+  if (receive_int(&retValue, s) < 0)
+  {
+    perror("read");
+    return 1;
+  }
+  return retValue;
+}
 // send a new message to a user in an interactive way
 int sendNew(char username[20], int s)
 {
@@ -613,6 +677,24 @@ int sendNew(char username[20], int s)
 
   return 0;
 }
+//full removing message dstinated to this user
+int fullwipemessage(int s)
+{
+  int retValue = 1;
+  int type = 12; //type for this call;
+  if (send_int(type, s) < 0)
+  {
+    perror("write");
+    return 1;
+  }
+  // Read  from socket 1 for change passwd done or not 0 for not
+  if (receive_int(&retValue, s) < 0)
+  {
+    perror("read");
+    return 1;
+  }
+  return retValue;
+}
 
 int main(int argc, char *argv[])
 {
@@ -660,7 +742,6 @@ int main(int argc, char *argv[])
     perror("socket");
     exit(1);
   }
-  
 
   // Determine host address by its network name
   if ((hst = gethostbyname("localhost")) == NULL)
@@ -668,7 +749,7 @@ int main(int argc, char *argv[])
     perror("gethostbyname");
     exit(1);
   }
- 
+
   // Fill structure
   bcopy(hst->h_addr, &saddr.sin_addr, hst->h_length);
   saddr.sin_family = AF_INET;
@@ -720,6 +801,7 @@ int main(int argc, char *argv[])
     printf("2) send a new message \n");
     printf("3) add new contact in the address book \n");
     printf("4) search messages\n");
+    printf("5) settings\n");
     printf("9) EXIT\n");
     scanf("%d", &i);
     switch (i)
@@ -757,11 +839,61 @@ int main(int argc, char *argv[])
 
     case 5:
     {
-      printf("hidden option to test micrphone");
-      AudioDataf a;
-      a = recordP();
-      playback(a);
+      int setOp = 0; //for selecting the option
+      do
+      {
+
+        printf("\n SETTINGS \n");
+        printf("1) test Microphone \n");
+        printf("2) change password  \n");
+        printf("3) full wipe of your inbox  \n");
+        printf("4) go back to main menu\n");
+        scanf("%d%*c", &setOp);
+
+        switch (setOp)
+        {
+        case 1:
+        {
+          AudioDataf a;
+          a = recordP();
+          playback(a);
+        }
+        break;
+        case 2:
+          if (changepasswd(s))
+          {
+            perror("change passwd has not'work ");
+          }
+          else
+            printf("password changed remeber it when relogin \n");
+          break;
+        case 3:
+        {
+          char fate;
+          printf("THIS CANNNOT BE UNDONE ARE YOU SURE ? Y/N");
+          scanf(" %c", &fate);
+          if (fate == 'Y')
+            if (fullwipemessage(s))
+            {
+              perror("full wipe has not work");
+            }
+            else
+            {
+              printf("ALL MESSAGE GONE \n ");
+            }
+        }
+        break;
+        case 4:
+          break;
+
+        default:
+          printf("Error options not available ");
+          break;
+        }
+
+      } while (setOp != 4);
     }
+
     break;
 
     case 9:

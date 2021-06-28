@@ -125,15 +125,80 @@ int getvdrIndex(char username[MAXLIMIT], int vdrs[VDRN])
    return 0; //if no vdr contains information return 0 you will use the frist;
 }
 
-//Delate a fiel from the vdr
+//Delate all message of a client  from the vdr
+int fullWipeUserFromVdr(char username[MAXLIMIT], int vdrs[VDRN], int vdrIndex, int c)
+{
+   sem_t *sem;        //semaphore for lock the vdr while used
+   int vdrReturn = 1; //the final return value from vdr;
+   int mdsReturn = 1; //the return value for the client;
+   int vdrType = 12;  //the type for this call
+
+   //check which is the vdr for the to user ;
+   //now open and lock the semaphore
+   char saddress[(MAXLIMIT + 10)] = {'\0'}; //the adress of the semphore for the i vdr
+   sprintf(saddress, "%s%d", SEM_NAME, vdrIndex);
+   sem = sem_open(saddress, O_RDWR); //open the semaphore
+   if (sem == SEM_FAILED)
+   {
+      perror("sem_open failed");
+      exit(EXIT_FAILURE);
+   }
+   sem_wait(sem); //lock the semaphore so you can write to the VDR socket without risk
+   //we send the type that  trigger the vdr to delate all the  data;
+   if (send_int(vdrType, vdrs[vdrIndex]) < 0)
+   {
+      perror("write");
+      return 1;
+   }
+   if (send_int(strlen(username), vdrs[vdrIndex]) < 0)
+   {
+      perror("write");
+      return 1;
+   }
+   //send the username  to the socket ad one for the endian
+   if (write(vdrs[vdrIndex], username, strlen(username) + 1) < 0)
+   {
+      perror("write");
+      exit(1);
+   }
+   //replay from the vdr
+   if (receive_int(&vdrReturn, vdrs[vdrIndex]) < 0)
+   {
+      perror("read");
+      return 1;
+   }
+
+   sem_post(sem); //unlock the semaphore "incresing the  counter"
+   if (sem_close(sem) < 0)
+   {
+      perror("sem_close failed");
+      exit(0);
+   }
+   //then return 0 if everything goes fine
+   if (vdrReturn == 0)
+      mdsReturn = 0;
+   else
+      mdsReturn = 1;
+
+   if (send_int(mdsReturn, c) < 0)
+   {
+      perror("write");
+      return 1;
+   }
+   return mdsReturn;
+}
+
+//Delate a message from the vdr
 int delatefromvdr(char username[MAXLIMIT], int vdrs[VDRN], int vdrIndex, int c)
 {
    PackageData tosend; //the package to send to recive from client and send to the vdr for delation
    sem_t *sem;         //semaphore for lock the vdr while used
-   int vdrToIndex;     //the index of the vdr of the to username;
-   int vdrReturn;      //the final return value from vdr;
+   int vdrReturn = 1;  //the final return value from vdr;
+   int mdsReturn = 1;  //the return value for the client;
+   int vdrType = 10;   //the type for this call
+
    //read the type from the sender
-   if (read(c, &tosend.type, sizeof(tosend.type)) < 0)
+   if (receive_int(&tosend.type, c) < 0)
    {
 
       perror("read");
@@ -145,132 +210,64 @@ int delatefromvdr(char username[MAXLIMIT], int vdrs[VDRN], int vdrIndex, int c)
       return 1;
    }
 
-   //read the user from the data is sended
-   if (read(c, &tosend.from, sizeof(tosend.from)) < 0)
+   recive_PackageData(&tosend, c);
+   if (strcmp(tosend.to, username) == 0)
    {
 
-      perror("read");
-      return 1;
-   }
-   //read the user to the message is sended
-   if (read(c, &tosend.to, sizeof(tosend.to)) < 0)
-   {
-      perror("read");
-      return 1;
-   }
-   //read the size of audio data
-   if (read(c, &tosend.size, sizeof(tosend.size)) < 0)
-   {
-      perror("read");
-      return 1;
-   }
-   //read the audioData
-   if (read(c, &tosend.message, tosend.size) < 0)
-   {
-      perror("read");
-      return 1;
-   }
+      //check which is the vdr for the to user ;
+      //now open and lock the semaphore
+      char saddress[(MAXLIMIT + 10)] = {'\0'}; //the adress of the semphore for the i vdr
+      sprintf(saddress, "%s%d", SEM_NAME, vdrIndex);
+      sem = sem_open(saddress, O_RDWR); //open the semaphore
+      if (sem == SEM_FAILED)
+      {
+         perror("sem_open failed");
+         exit(EXIT_FAILURE);
+      }
+      sem_wait(sem); //lock the semaphore so you can write to the VDR socket without risk
+      //we send the type that  trigger the vdr to delate the data;
+      if (send_int(vdrType, vdrs[vdrIndex]) < 0)
+      {
+         perror("write");
+         return 1;
+      }
+      //now send the data trought socket to the vdr and serialize it
+      if (send_PackageData(tosend, vdrs[vdrIndex]))
+      {
+         perror("Sending to the vdr hasent work ");
+         return 1;
+      }
 
-   //read the hash
-   if (read(c, &tosend.hash, sizeof(tosend.hash)) < 0)
-   {
-      perror("read");
-      return 1;
-   }
-   //read timestamp
-   if (read(c, &tosend.timestamp, sizeof(tosend.timestamp)) < 0)
-   {
-      perror("read");
-      return 1;
-   }
-   //check if the hash is still valid
-   if (tosend.hash != hashCode(tosend))
-   {
-      perror("hash is different");
-      return 1;
-   }
-   //ceck if the username is =to in this case we are sure is a user try to remove is messages ;
-   if (strcmp(username, tosend.to) != 0)
-   {
-      perror("sombody is try to remove a message as anoter user");
-      return 1;
-   }
-   //check which is the vdr for the to user ;
-   vdrToIndex = getvdrIndex(tosend.to, vdrs);
-   //now open and lock the semaphore
-   char saddress[(MAXLIMIT + 10)] = {'\0'}; //the adress of the semphore for the i vdr
-   sprintf(saddress, "%s%d", SEM_NAME, vdrToIndex);
-   sem = sem_open(saddress, O_RDWR); //open the semaphore
-   if (sem == SEM_FAILED)
-   {
-      perror("sem_open failed");
-      exit(EXIT_FAILURE);
-   }
-   sem_wait(sem);    //lock the semaphore so you can write to the VDR socket without risk
-   tosend.type = 10; //because is a delate operation
+      //read response from vdr
+      if (receive_int(&vdrReturn, vdrs[vdrIndex]) < 0)
+      {
+         perror("read");
+         return 1;
+      }
 
-   //now send the data trought socket to the vdr and serialize it
-   //when we send the type we  trigger the vdr to delate the data;
-   if (write(vdrs[vdrToIndex], &tosend.type, sizeof(tosend.type)) < 0)
+      sem_post(sem); //unlock the semaphore "incresing the  counter"
+      if (sem_close(sem) < 0)
+      {
+         perror("sem_close failed");
+         exit(0);
+      }
+      //then return 0 if everything goes fine
+      if (vdrReturn == 0)
+         mdsReturn = 0;
+      else
+         mdsReturn = 1;
+   }
+   else
+   {
+      perror("a user is try to delating a message not intended for us");
+      mdsReturn = 1;
+   }
+   if (send_int(mdsReturn, c) < 0)
    {
       perror("write");
       return 1;
    }
-
-   if (write(vdrs[vdrToIndex], &tosend.from, sizeof(tosend.from)) < 0)
-   {
-      perror("write");
-      return 1;
-   }
-
-   if (write(vdrs[vdrToIndex], &tosend.to, sizeof(tosend.to)) < 0)
-   {
-      perror("write");
-      return 1;
-   }
-
-   if (write(vdrs[vdrToIndex], &tosend.size, sizeof(tosend.size)) < 0)
-   {
-      perror("write");
-      return 1;
-   }
-
-   if (write(vdrs[vdrToIndex], &tosend.message, tosend.size) < 0)
-   {
-      perror("write");
-      return 1;
-   }
-
-   if (write(vdrs[vdrToIndex], &tosend.hash, sizeof(tosend.hash)) < 0)
-   {
-      perror("write");
-      return 1;
-   }
-
-   if (write(vdrs[vdrToIndex], &tosend.timestamp, sizeof(tosend.timestamp)) < 0)
-   {
-      perror("write");
-      return 1;
-   }
-
-   sem_post(sem); //unlock the semaphore "incresing the  counter"
-   if (sem_close(sem) < 0)
-   {
-      perror("sem_close failed");
-      exit(0);
-   }
-
-   sleep(1); // wait for get a response from vdr ;
-   //read response from vdr
-   if (read(vdrs[vdrToIndex], &vdrReturn, sizeof(vdrReturn)) < 0)
-   {
-      perror("read");
-      return 1;
-   }
-   //then return 0 if everything goes fine
-   if (vdrReturn == 1)
-      return 0;
-   return 1;
+   return mdsReturn;
 }
 int putalluser(int c)
 {
@@ -618,6 +615,49 @@ int autenticate(userData afantasticuser)
       return 0;
    fclose(fp);
 }
+//changing the passwd of a user 0 on success 1 on error
+int changepasswd(userData actual, int c)
+{
+   char tmp[MAXLIMIT]; // were to store the new password
+   int len = 0;
+   int returnvalue = 0;
+   //get the len of the username
+   if (receive_int(&len, c) < 0)
+   {
+      perror("read");
+      return 1;
+   }
+   //get the username
+   if (read(c, &tmp, len + 1) < 0)
+   {
+      perror("read");
+      return 1;
+   }
+   tmp[len] = '\0'; //add termination;
+
+   FILE *fp;
+   // save the address of the file
+   char address[(MAXLIMIT + 20)] = {'\0'};
+   sprintf(address, "users/%s.user", actual.username);
+   //check if the file alredy exist and if it is the case return 0
+   fp = fopen(address, "wb");
+   if (fp == NULL)
+   {
+      perror("no such file an attack is plausible");
+      return 1;
+   }
+   if (fwrite(tmp, sizeof(tmp), 1, fp) < 0)
+      returnvalue = 1;
+
+   fclose(fp);
+
+   if (send_int(returnvalue, c) < 0)
+   {
+      perror("write");
+      return 1;
+   }
+   return returnvalue;
+}
 
 //we do all the work with a single client in this function,is used by a child process
 //parameter are the int c that identify  the scoket for the client and vdrs[VDRN] that are a list of socket vdr
@@ -749,25 +789,26 @@ void dowork(int c, int vdrs[VDRN])
          }
 
          if (type == 10) //if the type of call is 10 you are asking for a delate from vdr;
-         {
-            int isDel = 0;
+
             if (delatefromvdr(afantasticuser.username, vdrs, vdrIndex, c))
             {
-               perror("cant send users to client ");
-               isDel = 1;
+               perror("cant del the message of the  client ");
             }
-            //write the result to the socket 0 for success 1 for error
-            if (write(c, &isDel, sizeof(int)) < 0)
+         if (type == 11)
+            if (changepasswd(afantasticuser, c))
             {
-               perror("write");
-               exit(1);
+               perror("cant change the passwd of the user ");
             }
-         }
+         if (type == 12)
+            if (fullWipeUserFromVdr(afantasticuser.username, vdrs, vdrIndex, c))
+            {
+               perror("cant remove all data of this  user from delegated vdr ");
+            }
 
          if (type == 5)
             printf("CHILD-CLOSE USER-LOGOUT  REQUESTED \n");
 
-         if (type != 0 && (type < 5 || type > 10))
+         if (type != 0 && (type < 5 || type > 12))
          {
             perror("Malicius client is plausible now i kill this child");
             printf("%d", type);

@@ -167,66 +167,46 @@ int storeMessage(int s)
     //then return 0 if everything goes fine
     return 0;
 }
+int delateallMessages(char username[MAXLIMIT])
+{
+    FILE *fp;
+    //save the address of the data
+    char address[(MAXLIMIT + 11)] = {'\0'};
+    sprintf(address, "users/%sData", username);
+    //and the one of the inbox file
+    char addressInbox[(MAXLIMIT + 11)] = {'\0'};
+    sprintf(addressInbox, "users/%sInbox", username);
+    fp = fopen(address, "rb");
+    if (fp == NULL)
+    {
+        perror("error open");
+        return 1;
+    }
+    else
+        fclose(fp);
+
+    //destroy the files
+    fclose(fopen(address, "wb"));
+    fclose(fopen(addressInbox, "wb"));
+    return 0;
+}
 
 //delate a message alredy store for a user
-int delateMessage(int s)
+int delateMessage(PackageData todel)
 {
-    PackageData todel; //package to delate
-    int trov = 0;      //variabile to set if i have found and delate the file
-    todel.type = 6;
-    //read the user from the data is sended
-    if (read(s, &todel.from, sizeof(todel.from)) < 0)
-    {
-        perror("read");
-        return 1;
-    }
-    //read the user to the message is sended
-    if (read(s, &todel.to, sizeof(todel.to)) < 0)
-    {
-        perror("read");
-        return 1;
-    }
-    //read the size of audio data
-    if (read(s, &todel.size, sizeof(todel.size)) < 0)
-    {
-        perror("read");
-        return 1;
-    }
-    //read the audioData
-    if (read(s, &todel.message, todel.size) < 0)
-    {
-        perror("read");
-        return 1;
-    }
-
-    //read the hash
-    if (read(s, &todel.hash, sizeof(todel.hash)) < 0)
-    {
-        perror("read");
-        return 1;
-    }
-    //read timestamp
-    if (read(s, &todel.timestamp, sizeof(todel.timestamp)) < 0)
-    {
-        perror("read");
-        return 1;
-    }
-    //check if the hash is still valid
-    if (todel.hash != hashCode(todel))
-    {
-        perror("hash is different");
-        return 1;
-    }
-
     //inizializethe read of all the package for this user;
     //read number of message for this user
     int j = getinbox(todel.to);
     int i = 0;
+    int isdel = 0; //if i have found the file to delate or not
     FILE *fp;
-    PackageData tmp[i]; //package data where to store data while reading and before check
-    // save the address of the file the name is the usename of the reciver
+    PackageData tmp[j]; //package data where to store data while reading and before check
+    // save the address of the datafile the name is the usename of the reciver
     char address[(MAXLIMIT + 11)] = {'\0'};
     sprintf(address, "users/%sData", todel.to);
+    //save the addtess of the inbox file of the reciver
+    char addressInbox[(MAXLIMIT + 11)] = {'\0'};
+    sprintf(addressInbox, "users/%sInbox", todel.to);
     //open in read mode
     fp = fopen(address, "rb");
     if (fp == NULL)
@@ -235,81 +215,33 @@ int delateMessage(int s)
         return 1;
     }
     //Start to reading and sending all PackageData destinated to  user ones to ones;also deserialize it
-    for (i; i < j; i++)
+    for (; i < j; i++)
     {
-        //read the type from file
-        if (fread(&tmp[i].type, sizeof(tmp[i].type), 1, fp) < 0)
-        {
-            perror("read");
-            return 0;
-        }
-        //read the from user from file
-        if (fread(&tmp[i].from, sizeof(tmp[i].from), 1, fp) < 0)
-        {
-            perror("read");
-            return 0;
-        }
-        //read the to user from file
-        if (fread(&tmp[i].to, sizeof(tmp[i].to), 1, fp) < 0)
-        {
-            perror("read");
-            return 0;
-        }
-        //read the size of AudioDataf
-        if (fread(&tmp[i].size, sizeof(tmp[i].size), 1, fp) < 0)
-        {
-            perror("read");
-            return 0;
-        }
-        //read audioDataf
-        if (fread(&tmp[i].message, tmp[i].size, 1, fp) < 0)
-        {
-            perror("read");
-            return 0;
-        }
-        //read the hash
-        if (fread(&tmp[i].hash, sizeof(tmp[i].hash), 1, fp) < 0)
-        {
-            perror("read");
-            return 0;
-        }
-        //read the timestamp
-        if (fread(&tmp[i].timestamp, sizeof(tmp[i].timestamp), 1, fp) < 0)
-        {
-            perror("read");
-            return 0;
-        }
-        //check if the hash is still valid
-        if (tmp[i].hash != hashCode(tmp[i]))
-        {
-            perror("hash is different");
-            return 0;
-        }
+        //read the package data from the file one by one
+        read_PackageData(&tmp[i], fp);
     }
     //now i have to all the data stored and can delate the file_data
     fclose(fp);
-    //destroy the file
+    //destroy the files
     fclose(fopen(address, "wb"));
+    fclose(fopen(addressInbox, "wb"));
     for (i = 0; i < j; i++)
     {
         if (strcmp(todel.timestamp, tmp[i].timestamp) == 0 && todel.hash == tmp[i].hash)
-            trov = 1;
+            isdel = 1;
         else
-        { //store the data
-            if (storetofile(todel))
+        { //store the data to the file
+            if (storetofile(tmp[i]))
             {
                 perror("store");
                 return 1;
             }
         }
     }
-    //we have done with the file
-    fclose(fp);
     //at this point we have recreated the file without the todel PackageData
-    //check if it was in the old data
-    if (trov == 0)
+    //check if it was in the old data if is not return one else 0
+    if (isdel == 0)
         return 1;
-    //if evrything is done return 0
     return 0;
 }
 int main(int argc, char *argv[])
@@ -442,12 +374,12 @@ int main(int argc, char *argv[])
                 char user[MAXLIMIT];
                 int userlen;
                 //read the username to search Audiodata;
-                if (receive_int(&userlen,s) < 0)
+                if (receive_int(&userlen, s) < 0)
                 {
                     perror("read");
                     return 1;
                 }
-                if (read(s,&user,userlen +1 ) < 0)
+                if (read(s, &user, userlen + 1) < 0)
                 {
                     perror("read");
                     exit(1);
@@ -488,20 +420,64 @@ int main(int argc, char *argv[])
             //type 10 to delate a message;
             if (type == 10)
             {
-                //set socret=1 for returning it to the MDS
                 socret = 1;
+                PackageData todel;
+                if (receive_int(&todel.type, s) < 0)
+                {
+                    perror("read");
+                    return 1;
+                }
+                if (todel.type != 6)
+                {
+                    perror("TYPE INCOMPATIBILITY");
+                    return 1;
+                }
+
+                recive_PackageData(&todel, s);
                 //if the file is not stored set socret=0
-                if (delateMessage(s))
+                if (delateMessage(todel))
+                {
+                    perror("cant remove the message");
+                    socret = 1;
+                }
+                else
                     socret = 0;
-                //write socret in the socket
-                if (write(s, &socret, sizeof(socret)) < 0)
+                if (send_int(socret, s) < 0)
+                {
+                    perror("write return value");
+                }
+            }
+            //type 10 to delate all the messages of a user
+            if (type == 12)
+            {
+                socret = 1;
+                char username[MAXLIMIT];
+                int len; // the len of the username
+                if (receive_int(&len, s) < 0)
+                {
+                    perror("read");
+                    return 1;
+                }
+                if (read(s, username, len + 1) < 0)
                 {
                     perror("write");
                     exit(1);
                 }
+                username[len] = '\0'; //add termination;
+
+                if (delateallMessages(username))
+                {
+                    perror("cant remove all  the messages");
+                    socret = 1;
+                }
+                else
+                    socret = 0;
+                if (send_int(socret, s) < 0)
+                {
+                    perror("write return value");
+                }
             }
         }
-
     } while (type != 5);
     // Close the client socket
     close(s);
