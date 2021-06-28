@@ -2,7 +2,7 @@
 
 #### Database-Server,Client-Server approch
 
-#### Fully writen in C (Tested on ArchLinux and Pop OS 21.04) .
+#### Fully writen in C (Tested on ArchLinux ,Pop OS 21.04,Parrot OS,kali linux ) .
 
 ## Parts:
 
@@ -36,9 +36,27 @@ or to delate message one by one.
 
 change password for logged users implemented.
 
-some security checks in the calls to prevent attacks using a modded version of the source code 
+some security checks in the calls to prevent attacks using a modded version of the source code .
+
+portaudio already present and  bundled you only need to install some audio related library .
 
 80's style command line interface.
+
+### Requirents:
+
+all the requirements nedded to use a bundled version of portaudio 
+
+#### -ljack  libjack-dev
+
+ sudo apt install  libjack-dev
+
+#### -lsndfile
+
+sudo apt-get  install libsndfile-dev
+
+#### -lasound
+
+sudo apt-get install libasound2-dev 
 
 ### Release notable problems:
 
