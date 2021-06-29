@@ -839,6 +839,9 @@ int main()
    int maxspawn;       //max number of  running client as far as Mds process is started;
    int runningvdr = 0; //number of  vdr actualy connected
 
+   //a little bit rude but  if we abort  during the use of mds we need to be sure the semaphore is unlinked whit prefix sem. it's  not probably to have another semaphore with similar name 
+    system("rm /dev/shm/sem.*");
+
    //create semaphores for vdr
    for (int j = 0; j < VDRN; j++)
    {

@@ -67,7 +67,7 @@ int selectuserto(int s, char *tmp)
     }
     //at the lest there is one user
     printf("actualy registred users %d \n", ru);
-    if (ru <= 1)
+    if (ru < 1)
     {
       perror("problem with MDS");
       return 1;
@@ -805,7 +805,7 @@ int main(int argc, char *argv[])
   do
   {
     ninbox = checkinbox(s);
-    printf("%d inbox messages for you \n", ninbox); //removed for testing reason could couse problem
+    printf("\n%d inbox messages for you \n", ninbox); //removed for testing reason could couse problem
     printf("1) show the new messages \n");
     printf("2) send a new message \n");
     printf("3) add new contact in the address book \n");
