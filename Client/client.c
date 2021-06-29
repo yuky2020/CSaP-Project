@@ -30,10 +30,12 @@ int selectuserto(int s, char *tmp)
     }
     j = 0;
 
-    while (!feof(fp))
-    { // while not end of file
-      fread(usernameList[j], sizeof(char[MAXLIMIT]), 1, fp);
-      printf("%d,%s\n", (j + 1), usernameList[j]);
+    while (!feof(fp)) // while not end of file
+    {
+      if (fread(usernameList[j], sizeof(char[MAXLIMIT]), 1, fp))
+      {
+        printf("%d,%s\n", (j + 1), usernameList[j]);
+      }
       j++;
     }
     j--;        //becouse you encrement before re enter
@@ -380,7 +382,7 @@ int showMessagewithOptions(int s, char username[MAXLIMIT], PackageData todispaly
     {
       selectuserto(s, todispaly.to); //inoltrate to a new user the message;
       strcpy(todispaly.from, username);
-      todispaly.hash=hashCode(todispaly);
+      todispaly.hash = hashCode(todispaly);
       if (send_PackageData(todispaly, s))
         printf("MESSAGE NOT SENT NETWORK PROBLEM TRY AGAIN \n"); //sendMessage return 1 upon fail
       else
@@ -728,8 +730,8 @@ int main(int argc, char *argv[])
     // Program exits if file pointer returns NULL.
     exit(1);
   }
-  //skip the frist  string 
-  fgets(hostname,20,config);
+  //skip the frist  string
+  fgets(hostname, 20, config);
   // reads text until newline is encountered
   fgets(hostname, 20, config);
   //add terminaton
@@ -881,7 +883,8 @@ int main(int argc, char *argv[])
           char fate;
           printf("THIS CANNNOT BE UNDONE ARE YOU SURE ? Y/N");
           scanf(" %c", &fate);
-          if (fate == 'Y'){
+          if (fate == 'Y')
+          {
             if (fullwipemessage(s))
             {
               perror("full wipe has not work");
@@ -889,7 +892,8 @@ int main(int argc, char *argv[])
             else
             {
               printf("ALL MESSAGE GONE \n ");
-            }}
+            }
+          }
         }
         break;
         case 4:
