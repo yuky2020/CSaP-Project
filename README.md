@@ -24,6 +24,8 @@ Possibility to send long audio without death times .
 
 No Time limit for audio rec has still reconized .
 
+Socket operation are made atomical by design of specific function (no large buffers are used) for improve security. 
+
 Huge use of semaphore and parent-child processes(use POSIX semaphore insted of system five one)..
 
 The project is highly scalable(you can add how much VDRs you want ), but can still improve(es. Decentralized Mdss that can comunicate each other  ).
@@ -49,10 +51,6 @@ portaudio already present and  bundled you only need to install some audio relat
 ##### If a vdr fail the Mds will close the connection with the clients and die (no restart or use of goto to go before connection since is more easy to set up an auto restart system)
 
 ##### If a client fail well the  socket for that client  and child process in the mds are correctly closed and you can easily reconnect
-
-
-
-
 
 ### Dependencies:
 
