@@ -14,8 +14,8 @@
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) // "Permessi del semaforo"
 #define INITIAL_VALUE 1                                   //intial value of the semaphore
 #define VDRN 1                                            //Number of vdr used
-#define VDRPORT 16000
-#define CLIENTPORT 20000
+#define VDRPORT 16000                                     //the port used for the vdr socket
+#define CLIENTPORT 20000                                  //the port used for the client socket
 //get the number of inbox message of a logged user;
 int giveInbox(char usern[MAXLIMIT], int vdrIndex, int vdrs[VDRN])
 {
@@ -823,6 +823,7 @@ void dowork(int c, int vdrs[VDRN])
    printf("Connection is getting closed");
    shutdown(c, 2);
    close(c);
+   exit(1);
 }
 
 int main()
@@ -834,11 +835,10 @@ int main()
    struct sockaddr_in saddr;
    int ops[3];
    int addr;
-   int running;    //number of running client
-   int maxspawn;   //max number of  running client as far as Mds process is started;
-   int runningvdr; //number of  vdr actualy connected
+   int running;        //number of running client
+   int maxspawn;       //max number of  running client as far as Mds process is started;
+   int runningvdr = 0; //number of  vdr actualy connected
 
-   
    //create semaphores for vdr
    for (int j = 0; j < VDRN; j++)
    {
@@ -977,10 +977,12 @@ int main()
              (addr & 0xFF000000) >> 24);
       switch (fork())
       {
+      // in the child process we work with a single  client
       case 0:
          close(s);
          dowork(c, vdrs);
          exit(0);
+         break;
       case -1:
          perror("fork");
          break;
@@ -992,11 +994,47 @@ int main()
             maxspawn = running;
             printf("== Max:%d\n", maxspawn);
          }
+         //one process(client) is exited could be also a vdr problem if it is kill the program
          while (waitpid(-1, NULL, WNOHANG) > 0)
+         { //check if vdr work
+            for (int j = 0; j < runningvdr; j++)
+            {
+               int echo = 1;
+               //lock the semaphore
+               sem_wait(semvdr[j]);
+               //write the echo in the socket
+               if (send_int(echo, vdrs[j]) < 0)
+               {
+                  printf("a vdr connection is lost restart mds");
+                  perror("write");
+                  goto EXIT;
+                  
+               }
+               sleep(1); //time to get the result write in the socket by vdr
+               //read from the socket the value
+               if (receive_int(&echo, vdrs[j]) < 0)
+               {
+                  printf("a vdr connection is lost restart mds");
+                  perror("write");
+                  goto EXIT;
+               }
+
+               //ceck if the response is valid and if its not close the connection
+               if (echo != 1)
+               {
+                  printf("a vdr connection is lost restart mds");
+                  close(vdrs[j]);
+                  goto EXIT;
+               }
+               //Unlock the seamphore
+               sem_post(semvdr[j]);
+            }
             running -= 1;
+         }
          break;
       }
    }
+EXIT:
    // close  client "Master socket"
    close(s);
    //close vdr "Master socket"

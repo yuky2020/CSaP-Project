@@ -42,7 +42,17 @@ portaudio already present and  bundled you only need to install some audio relat
 
 80's style command line interface.
 
-### 
+### What happened if a part fail(a part die for some external  reason )?
+
+##### If mds fail the client is disconnected and vdr  close the connection and  waiting for the mds to reconnect
+
+##### If a vdr fail the Mds will close the connection with the clients and die (no restart or use of goto to go before connection since is more easy to set up an auto restart system)
+
+##### If a client fail well the  socket for that client  and child process in the mds are correctly closed and you can easily reconnect
+
+
+
+
 
 ### Dependencies:
 
@@ -72,8 +82,6 @@ there is a script for everything in this project
 
 you already know 
 
-
-
 ### Release notable problems:
 
 ###### ~~lib-portaudio work using alsa on linux  and  sometime i found problems in getting audio by the  microphone off my laptop (Dell G3), anyway i have also  problems  with other app like zoom or google meet~~   (turns out that was *Intel* Sunrise Point-LP HD *Audio*  devicd and  is *Linux* driver snd_hda_intel related problem)
@@ -86,42 +94,40 @@ you already know
 
 ### Metadata Server (MDS)
 
-#### ● Handles initial connections with clients, maintains a “database” (even implemented as a file) containinginformation regarding users, messages, mailbox status, free space, etc
+###### ● Handles initial connections with clients, maintains a “database” (even implemented as a file) containinginformation regarding users, messages, mailbox status, free space, etc
 
-#### Upon startup, or after a crash, the MDS contacts all known VDR processes, which could be running on thesame or on another server, to get/check information about the status.
+###### Upon startup, or after a crash, the MDS contacts all known VDR processes, which could be running on thesame or on another server, to get/check information about the status.
 
-#### – Both the MDS and VDR should keep copy of their own metadata.
+###### – Both the MDS and VDR should keep copy of their own metadata.
 
-#### The information wrt IP addresses and port# of the various components is contained in a configuration file,read upon startup by all processes
+###### The information wrt IP addresses and port# of the various components is contained in a configuration file,read upon startup by all processes
 
-#### After initialization, the MDS waits for requests from clients which, upon authentication (usingname/password), could:
+###### After initialization, the MDS waits for requests from clients
 
 ### 
 
 ## ONE or more Voice Data Repositories (VDR)
 
-### ● Store audio files, keeping a copy of metadata (username,timestamp, ..) plus an hash for security.
+###### ● Store audio files, keeping a copy of metadata (username,timestamp, ..) plus an hash for security.
 
-### ● When starting, they check local files for corruption, rebuild their metadata and “check-in” with MDS
-
-### ● Send/Receive/Delete audio files upon request from MDS (checking hashes before returning them to server)
+##### ● Send/Receive/Delete audio files upon request from MDS (checking hashes before returning them to server)
 
 ## 
 
 ## Clients
 
-### ● Connect to MDS to authenticate
+##### ● Connect to MDS to authenticate
 
-### ● Check for new messages
+##### ● Check for new messages
 
-### Search for messages:
+##### Search for messages:
 
 – From specific users, selecting them from the entire list of from a personal
 address book
 – Within a specific data range
 
-### ● Retrieve and play messages on the local audio system
+##### ● Retrieve and play messages on the local audio system
 
-### ● Delete messages
+##### ● Delete messages
 
-### ● Record a voice message and send it to a user (selected as indicated in the above bullet)
+##### ● Record a voice message and send it to a user (selected as indicated in the above bullet)

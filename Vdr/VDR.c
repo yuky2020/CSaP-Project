@@ -245,8 +245,11 @@ int delateMessage(PackageData todel)
     return 0;
 }
 int main(int argc, char *argv[])
+
 {
-    int s, socret; //s is for the socket ,socret is for returning some information to the socket
+
+    int s, socret;       //s is for the socket ,socret is for returning some information to the socket
+    int isConnected = 0; //if the socket is connected
     struct sockaddr_in saddr;
     struct hostent *hst;
     char hostname[MAXLIMIT];
@@ -270,9 +273,12 @@ int main(int argc, char *argv[])
     //read port number
     fscanf(config, "%[^\n]", port);
     fclose(config);
-
-    // here for testing pourpose
-    
+restart://this label is used when mds crash to restart the connection with the new mds
+    if (isConnected == 1)
+    {
+        close(s);
+        isConnected = 0;
+    }
 
     // Create the stream socket
     if ((s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -293,15 +299,21 @@ int main(int argc, char *argv[])
     // Fill structure
     bcopy(hst->h_addr, &saddr.sin_addr, hst->h_length);
     saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(16000);
+    saddr.sin_port = htons(atoi(port));
 
-    // Connect to other socket(mds)
-    if (connect(s, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
+    do
     {
-        perror("connect");
-        exit(1);
-    }
-    puts("connect done");
+        // Connect to other socket(mds)
+        if (connect(s, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
+        {
+            perror("connect hasent work try again");
+        }
+        else
+        {
+            isConnected = 1;
+            puts("connect done");
+        }
+    } while (isConnected == 0);
 
     do
     {
@@ -310,7 +322,7 @@ int main(int argc, char *argv[])
         if (receive_int(&type, s) < 0)
         {
             perror("read call type");
-            exit(1);
+            goto restart; //mds is probably down go back to connection
         }
         else
         {
@@ -479,6 +491,6 @@ int main(int argc, char *argv[])
             }
         }
     } while (type != 5);
-    // Close the client socket
+    // Close the vdr socket
     close(s);
 }
