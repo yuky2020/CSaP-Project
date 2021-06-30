@@ -6,13 +6,13 @@
 
 ## Parts:
 
-Client:Interact with the user;
+#### Client:Interact with the user;
 
-VDR: VoiceDataRepository,is aim is to store and update list of message of various user(his inbox) in an efficent way. 
+#### VDR: VoiceDataRepository,is aim is to store and update list of message of various user(his inbox) in an efficent way.
 
-MDS:Main server, interact with the user for authentication and operate between Client and VDR as intermediary.
+#### MDS:Main server, interact with the user for authentication and operate between Client and VDR as intermediary.
 
-## Features
+## Features(Design Choices)
 
 Use PortAudio library (insted of Alsamixer or Pulseaudio ones) for better inter-compatibility.
 
@@ -20,9 +20,7 @@ Auto-crop silence in the message by analyzing peek frequency.
 
 Possibility of search for messages from a specific user, a date range and even the two things tougheter!
 
-Possibility to send long audio without death times .
-
-No Time limit for audio rec has still reconized .
+Possibility to send long audio without death times ,no time limit for audio rec has still reconized .
 
 Socket operation are made atomical by design of specific function (no large buffers are used) for improve security. 
 
@@ -44,7 +42,7 @@ portaudio already present and  bundled you only need to install some audio relat
 
 80's style command line interface.
 
-### What happened if a part fail(a part die for some external  reason )?
+## What happened if a part fail(a part die for some external  reason )?
 
 ##### If mds fail the client is disconnected and vdr  close the connection and  waiting for the mds to reconnect
 
@@ -52,7 +50,7 @@ portaudio already present and  bundled you only need to install some audio relat
 
 ##### If a client fail well the  socket for that client  and child process in the mds are correctly closed and you can easily reconnect
 
-### Dependencies:
+## Dependencies:
 
 all the dependencies nedded to use a bundled version of portaudio 
 
@@ -86,9 +84,11 @@ you already know
 
 ###### maybe recording is a little too verbose and config files too little
 
-### Project   structure :
+### Project   structure(each function and is use ) :
 
 ![](https://github.com/yuky2020/CSaP-Project/blob/main/Project%20structure/CSAP%20PROJECT.png?raw=true)
+
+## Some of the project requirements
 
 ### Metadata Server (MDS)
 
@@ -96,9 +96,9 @@ you already know
 
 ###### Upon startup, or after a crash, the MDS contacts all known VDR processes, which could be running on thesame or on another server, to get/check information about the status.
 
-###### – Both the MDS and VDR should keep copy of their own metadata.
+###### – Both the MDS and VDR  keep copy of their own metadata.
 
-###### The information wrt IP addresses and port# of the various components is contained in a configuration file,read upon startup by all processes
+###### The information for socket connections is contained in a configuration file,read upon startup by all processes
 
 ###### After initialization, the MDS waits for requests from clients
 
