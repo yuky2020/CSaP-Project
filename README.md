@@ -3,6 +3,8 @@
 #### Database-Server,Client-Server approch
 
 #### Fully writen in C (Tested on ArchLinux ,Pop OS 21.04,Parrot OS,kali linux ) .
+#### Program is intended anyway to be used with debian Buster  and it's derivates (since  scripts are tested mostly on debian derivates Parrot os,Kali,Pop os 21.04(derviate of a derivate distro(Ubuntu)) 
+##### A future Aur package for Arch is plasuible and  also .deb package. 
 
 ## Parts:
 
